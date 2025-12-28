@@ -206,7 +206,8 @@ class Room {
 
         this.knocker = socketId;
         // Ogni altro giocatore fa ancora un turno
-        this.knockTurnsRemaining = this.playerOrder.length - 1;
+        // Usiamo playerOrder.length perché advanceTurn() decrementa subito dopo knock()
+        this.knockTurnsRemaining = this.playerOrder.length;
 
         const turnResult = this.advanceTurn();
 

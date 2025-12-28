@@ -1234,3 +1234,203 @@ input[type="text"]:focus {
         padding: 20px;
     }
 }
+
+/* Coins Display */
+.coin {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #ffd700 0%, #ffb300 50%, #ff8c00 100%);
+    box-shadow:
+        inset 0 2px 4px rgba(255, 255, 255, 0.5),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.4);
+    border: 2px solid #b8860b;
+    position: relative;
+}
+
+.coin::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Central Pot (Gruzzolo) */
+.central-pot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.coins-pile {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    max-width: 180px;
+    min-height: 32px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.coins-pile .coin {
+    transition: transform 0.3s ease;
+}
+
+.coins-pile .coin:hover {
+    transform: scale(1.1);
+}
+
+/* Stacked coin effect for central pot */
+.coins-pile.stacked {
+    position: relative;
+    min-width: 60px;
+    min-height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.coins-pile.stacked .coin {
+    position: absolute;
+    animation: coin-drop 0.3s ease-out;
+}
+
+@keyframes coin-drop {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.pot-label {
+    font-size: 0.9rem;
+    color: var(--gold);
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+#pot-count {
+    font-size: 1.1rem;
+}
+
+/* Player coins display on video wrapper */
+.video-wrapper .player-coins-pile {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    gap: 2px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 3px 6px;
+    border-radius: 8px;
+    align-items: center;
+}
+
+.video-wrapper .player-coins-pile .coin {
+    width: 14px;
+    height: 14px;
+    border-width: 1px;
+}
+
+.video-wrapper .player-coins-pile .coin::after {
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+}
+
+.video-wrapper .player-coins-pile .coins-count {
+    color: var(--gold);
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+/* Player info card coins pile */
+.player-info-card .player-coins-pile {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    margin-top: 4px;
+    flex-wrap: wrap;
+    max-width: 80px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.player-info-card .player-coins-pile .coin {
+    width: 12px;
+    height: 12px;
+    border-width: 1px;
+}
+
+.player-info-card .player-coins-pile .coin::after {
+    display: none;
+}
+
+/* Coin animation when winning */
+@keyframes coin-shine {
+    0%, 100% {
+        box-shadow:
+            inset 0 2px 4px rgba(255, 255, 255, 0.5),
+            inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+            0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+    50% {
+        box-shadow:
+            inset 0 2px 4px rgba(255, 255, 255, 0.8),
+            inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+            0 0 10px rgba(255, 215, 0, 0.8);
+    }
+}
+
+.coin.winning {
+    animation: coin-shine 0.5s ease-in-out infinite;
+}
+
+/* Responsive adjustments for coins */
+@media (max-width: 768px) {
+    .coin {
+        width: 20px;
+        height: 20px;
+    }
+
+    .coins-pile {
+        max-width: 140px;
+        padding: 6px;
+    }
+
+    .video-wrapper .player-coins-pile .coin {
+        width: 12px;
+        height: 12px;
+    }
+
+    .player-info-card .player-coins-pile .coin {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .coin {
+        width: 16px;
+        height: 16px;
+    }
+
+    .coins-pile {
+        max-width: 120px;
+    }
+}

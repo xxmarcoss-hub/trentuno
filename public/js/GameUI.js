@@ -446,10 +446,11 @@ class GameUI {
         const myPlayer = state.players[myId];
         const hasDrawn = myPlayer?.hasDrawn || false;
 
-        // Update turn indicator with phase info
+        // Update turn indicator with phase info (only show instructions for local player)
         if (!state.roundActive) {
             this.currentTurn.textContent = 'In attesa della prossima mano...';
             this.turnIndicator.classList.remove('your-turn');
+            this.turnIndicator.classList.remove('hidden');
         } else if (isMyTurn) {
             if (hasDrawn) {
                 this.currentTurn.textContent = 'Trascina una carta nel pozzo per scartarla';
@@ -457,9 +458,10 @@ class GameUI {
                 this.currentTurn.textContent = 'È il tuo turno';
             }
             this.turnIndicator.classList.add('your-turn');
+            this.turnIndicator.classList.remove('hidden');
         } else {
-            const currentPlayer = state.players[state.currentPlayer];
-            this.currentTurn.textContent = `Turno di ${currentPlayer?.name || 'altro giocatore'}`;
+            // Hide turn indicator when it's not my turn - the webcam glow shows whose turn it is
+            this.turnIndicator.classList.add('hidden');
             this.turnIndicator.classList.remove('your-turn');
         }
 

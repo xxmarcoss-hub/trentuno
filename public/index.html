@@ -70,18 +70,6 @@
             </div>
         </header>
 
-        <!-- Video Chat Section -->
-        <section class="video-section">
-            <div id="videos-container" class="videos-grid">
-                <!-- Local video -->
-                <div class="video-wrapper local">
-                    <video id="local-video" autoplay muted playsinline></video>
-                    <span class="player-name">Tu</span>
-                </div>
-                <!-- Remote videos will be added dynamically -->
-            </div>
-        </section>
-
         <!-- Game Section -->
         <section class="game-section">
             <!-- Turn indicator -->
@@ -90,25 +78,54 @@
                 <span id="knock-indicator" class="knock-indicator hidden">BUSSATA!</span>
             </div>
 
-            <!-- Players info bar -->
-            <div id="players-info" class="players-info"></div>
+            <!-- Table with players around it -->
+            <div class="table-container">
+                <!-- Top players (opponents) -->
+                <div id="players-top" class="players-position players-top"></div>
 
-            <!-- Table area -->
-            <div class="table-area">
-                <!-- Deck -->
-                <div class="deck-area">
-                    <div id="deck" class="card card-back">
-                        <span id="deck-count">52</span>
+                <!-- Middle row: left players, table, right players -->
+                <div class="table-middle-row">
+                    <!-- Left players -->
+                    <div id="players-left" class="players-position players-left"></div>
+
+                    <!-- Table area -->
+                    <div class="table-area">
+                        <!-- Cards row -->
+                        <div class="cards-row">
+                            <!-- Deck -->
+                            <div class="deck-area">
+                                <div id="deck" class="card card-back">
+                                    <span id="deck-count">52</span>
+                                </div>
+                                <span class="area-label">Mazzo</span>
+                            </div>
+
+                            <!-- Discard pile -->
+                            <div class="discard-area">
+                                <div id="discard-pile" class="discard-pile"></div>
+                                <span class="area-label">Pozzo</span>
+                            </div>
+                        </div>
+
+                        <!-- Players info (coins) displayed in table -->
+                        <div id="players-info" class="players-info"></div>
                     </div>
-                    <span class="area-label">Mazzo</span>
+
+                    <!-- Right players -->
+                    <div id="players-right" class="players-position players-right"></div>
                 </div>
 
-                <!-- Discard pile -->
-                <div class="discard-area">
-                    <div id="discard-pile" class="discard-pile"></div>
-                    <span class="area-label">Pozzo</span>
+                <!-- Bottom: local player -->
+                <div id="players-bottom" class="players-position players-bottom">
+                    <div class="video-wrapper local">
+                        <video id="local-video" autoplay muted playsinline></video>
+                        <span class="player-name">Tu</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Hidden container for legacy compatibility -->
+            <div id="videos-container" class="hidden"></div>
 
             <!-- Player's hand -->
             <div class="hand-area">

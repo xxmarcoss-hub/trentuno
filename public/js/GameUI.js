@@ -28,6 +28,13 @@ class GameUI {
         this.videosContainer = document.getElementById('videos-container');
         this.localVideo = document.getElementById('local-video');
 
+        // Player positions around the table
+        this.playersTop = document.getElementById('players-top');
+        this.playersLeft = document.getElementById('players-left');
+        this.playersRight = document.getElementById('players-right');
+        this.playersBottom = document.getElementById('players-bottom');
+        this.remoteVideos = new Map(); // peerId -> { wrapper, position }
+
         // Trentuno game elements
         this.potDisplay = document.getElementById('pot-display');
         this.roundDisplay = document.getElementById('round-display');
@@ -198,6 +205,7 @@ class GameUI {
         const wrapper = document.createElement('div');
         wrapper.className = 'video-wrapper';
         wrapper.id = `video-${peerId}`;
+        wrapper.dataset.peerId = peerId;
 
         const video = document.createElement('video');
         video.autoplay = true;
@@ -208,9 +216,89 @@ class GameUI {
         nameSpan.className = 'player-name';
         nameSpan.textContent = playerName || 'Giocatore';
 
+        const coinsSpan = document.createElement('span');
+        coinsSpan.className = 'player-coins';
+        coinsSpan.textContent = '0';
+
         wrapper.appendChild(video);
         wrapper.appendChild(nameSpan);
-        this.videosContainer.appendChild(wrapper);
+        wrapper.appendChild(coinsSpan);
+
+        // Determine position based on number of remote players
+        const position = this.getNextPosition();
+        this.remoteVideos.set(peerId, { wrapper, position, playerName });
+        this.positionVideo(wrapper, position);
+    }
+
+    getNextPosition() {
+        // Positions: top, left, right
+        // Distribute players evenly
+        const positions = ['top', 'left', 'right'];
+        const counts = { top: 0, left: 0, right: 0 };
+
+        this.remoteVideos.forEach(({ position }) => {
+            if (counts[position] !== undefined) {
+                counts[position]++;
+            }
+        });
+
+        // Find position with least players
+        let minPos = 'top';
+        let minCount = counts.top;
+        for (const pos of positions) {
+            if (counts[pos] < minCount) {
+                minCount = counts[pos];
+                minPos = pos;
+            }
+        }
+        return minPos;
+    }
+
+    positionVideo(wrapper, position) {
+        const container = {
+            'top': this.playersTop,
+            'left': this.playersLeft,
+            'right': this.playersRight
+        }[position];
+
+        if (container) {
+            container.appendChild(wrapper);
+        }
+    }
+
+    repositionAllVideos() {
+        // Clear all position containers
+        this.playersTop.innerHTML = '';
+        this.playersLeft.innerHTML = '';
+        this.playersRight.innerHTML = '';
+
+        const remoteCount = this.remoteVideos.size;
+        const entries = Array.from(this.remoteVideos.entries());
+
+        // Redistribute based on count
+        // 1 player: top
+        // 2 players: left, right
+        // 3 players: top, left, right
+        // 4 players: top (2), left, right
+
+        entries.forEach(([peerId, data], index) => {
+            let position;
+            if (remoteCount === 1) {
+                position = 'top';
+            } else if (remoteCount === 2) {
+                position = index === 0 ? 'left' : 'right';
+            } else if (remoteCount === 3) {
+                position = ['top', 'left', 'right'][index];
+            } else {
+                // 4 players: 2 top, 1 left, 1 right
+                if (index < 2) position = 'top';
+                else if (index === 2) position = 'left';
+                else position = 'right';
+            }
+
+            data.position = position;
+            this.positionVideo(data.wrapper, position);
+        });
     }
 
     removeRemoteVideo(peerId) {
@@ -218,6 +306,48 @@ class GameUI {
         if (wrapper) {
             wrapper.remove();
         }
+        this.remoteVideos.delete(peerId);
+        this.repositionAllVideos();
+    }
+
+    updateVideoStates(state, myId) {
+        // Update local player video
+        const localWrapper = this.playersBottom.querySelector('.video-wrapper.local');
+        if (localWrapper && state.players[myId]) {
+            const isMyTurn = state.currentPlayer === myId && state.roundActive;
+            localWrapper.classList.toggle('current-turn', isMyTurn);
+            localWrapper.classList.toggle('knocked', state.knocker === myId);
+
+            // Update local player name with coins
+            const nameSpan = localWrapper.querySelector('.player-name');
+            if (nameSpan) {
+                nameSpan.textContent = `Tu (${state.players[myId].coins})`;
+            }
+        }
+
+        // Update remote player videos
+        this.remoteVideos.forEach(({ wrapper }, peerId) => {
+            const player = state.players[peerId];
+            if (!player) return;
+
+            const isCurrentTurn = state.currentPlayer === peerId && state.roundActive;
+            const isKnocker = state.knocker === peerId;
+
+            wrapper.classList.toggle('current-turn', isCurrentTurn);
+            wrapper.classList.toggle('knocked', isKnocker);
+
+            // Update coins display
+            const coinsSpan = wrapper.querySelector('.player-coins');
+            if (coinsSpan) {
+                coinsSpan.textContent = player.coins;
+            }
+
+            // Update name
+            const nameSpan = wrapper.querySelector('.player-name');
+            if (nameSpan) {
+                nameSpan.textContent = player.name;
+            }
+        });
     }
 
     updateGameState(state, myId) {
@@ -227,6 +357,9 @@ class GameUI {
         // Update game info
         this.potDisplay.textContent = state.pot;
         this.roundDisplay.textContent = state.roundNumber || 1;
+
+        // Update video wrappers with game state
+        this.updateVideoStates(state, myId);
 
         const isMyTurn = state.currentPlayer === myId && state.roundActive;
         const myPlayer = state.players[myId];

@@ -282,27 +282,66 @@ input[type="text"]:focus {
     opacity: 0.5;
 }
 
-/* Video Section */
-.video-section {
-    background: var(--card-bg);
-    padding: 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+/* Table Container - Players around the table */
+.table-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
 }
 
-.videos-grid {
+.table-middle-row {
     display: flex;
+    align-items: center;
     justify-content: center;
     gap: 16px;
+    width: 100%;
+}
+
+/* Player positions around the table */
+.players-position {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    min-height: 90px;
+}
+
+.players-top {
     flex-wrap: wrap;
 }
 
+.players-left,
+.players-right {
+    flex-direction: column;
+    min-width: 130px;
+}
+
+.players-bottom {
+    margin-top: auto;
+}
+
+/* Video wrapper styling */
 .video-wrapper {
     position: relative;
-    width: 160px;
-    height: 120px;
+    width: 120px;
+    height: 90px;
     background: var(--bg-color);
     border-radius: var(--border-radius);
     overflow: hidden;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.video-wrapper.current-turn {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.5);
+}
+
+.video-wrapper.knocked {
+    border-color: var(--warning);
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
 }
 
 .video-wrapper video {
@@ -323,6 +362,21 @@ input[type="text"]:focus {
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 0.75rem;
+    max-width: calc(100% - 8px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.video-wrapper .player-coins {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.7);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    color: var(--gold);
 }
 
 /* Game Section */
@@ -421,13 +475,26 @@ input[type="text"]:focus {
 /* Table Area */
 .table-area {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 60px;
-    padding: 24px;
+    gap: 16px;
+    padding: 24px 40px;
     background: var(--table-green);
-    border-radius: 16px;
-    min-height: 180px;
+    border-radius: 24px;
+    min-height: 200px;
+    min-width: 280px;
+    box-shadow:
+        inset 0 0 60px rgba(0,0,0,0.3),
+        0 4px 20px rgba(0,0,0,0.4);
+    border: 4px solid #0d4420;
+}
+
+.table-area .cards-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
 }
 
 .deck-area, .discard-area {
@@ -1054,9 +1121,24 @@ input[type="text"]:focus {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .table-container {
+        gap: 8px;
+    }
+
+    .table-middle-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .players-left,
+    .players-right {
+        flex-direction: row;
+        min-width: auto;
+    }
+
     .video-wrapper {
-        width: 120px;
-        height: 90px;
+        width: 100px;
+        height: 75px;
     }
 
     .card {
@@ -1096,8 +1178,13 @@ input[type="text"]:focus {
     }
 
     .table-area {
-        gap: 30px;
-        padding: 16px;
+        padding: 16px 20px;
+        min-width: auto;
+        min-height: 160px;
+    }
+
+    .table-area .cards-row {
+        gap: 20px;
     }
 
     .game-controls {

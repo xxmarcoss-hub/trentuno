@@ -35,6 +35,7 @@ class GameUI {
         this.turnIndicator = document.querySelector('.turn-indicator');
         this.knockIndicator = document.getElementById('knock-indicator');
         this.playersInfo = document.getElementById('players-info');
+        this.deckElement = document.getElementById('deck');
         this.deckCount = document.getElementById('deck-count');
         this.discardPile = document.getElementById('discard-pile');
         this.playerHand = document.getElementById('player-hand');
@@ -42,8 +43,6 @@ class GameUI {
         this.myCoins = document.getElementById('my-coins');
 
         // Game controls
-        this.drawDiscardBtn = document.getElementById('draw-discard-btn');
-        this.drawDeckBtn = document.getElementById('draw-deck-btn');
         this.knockBtn = document.getElementById('knock-btn');
         this.declare31Btn = document.getElementById('declare-31-btn');
 
@@ -67,6 +66,83 @@ class GameUI {
         this.players = {};
         this.currentState = null;
         this.myId = null;
+
+        // Drag and drop callbacks
+        this.onDrawCard = null;    // Called when card is drawn from deck/discard
+        this.onDiscardCard = null; // Called when card is discarded
+
+        this.setupDragAndDrop();
+    }
+
+    setupDragAndDrop() {
+        // Make deck draggable
+        this.deckElement.setAttribute('draggable', 'true');
+        this.deckElement.addEventListener('dragstart', (e) => {
+            if (!this.canDraw()) return e.preventDefault();
+            e.dataTransfer.setData('text/plain', 'deck');
+            e.dataTransfer.effectAllowed = 'move';
+            this.deckElement.classList.add('dragging');
+        });
+        this.deckElement.addEventListener('dragend', () => {
+            this.deckElement.classList.remove('dragging');
+        });
+
+        // Player hand as drop zone for drawing cards
+        this.playerHand.addEventListener('dragover', (e) => {
+            if (!this.canDraw()) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.playerHand.classList.add('drop-target');
+        });
+        this.playerHand.addEventListener('dragleave', () => {
+            this.playerHand.classList.remove('drop-target');
+        });
+        this.playerHand.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.playerHand.classList.remove('drop-target');
+            const source = e.dataTransfer.getData('text/plain');
+            if (source === 'deck' || source === 'discard') {
+                if (this.onDrawCard) this.onDrawCard(source);
+            }
+        });
+
+        // Discard pile as drop zone for discarding cards
+        this.discardPile.addEventListener('dragover', (e) => {
+            if (!this.canDiscard()) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.discardPile.classList.add('drop-target');
+        });
+        this.discardPile.addEventListener('dragleave', () => {
+            this.discardPile.classList.remove('drop-target');
+        });
+        this.discardPile.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.discardPile.classList.remove('drop-target');
+            const data = e.dataTransfer.getData('text/plain');
+            if (data.startsWith('hand-')) {
+                const cardIndex = parseInt(data.replace('hand-', ''));
+                if (this.onDiscardCard) this.onDiscardCard(cardIndex);
+            }
+        });
+    }
+
+    canDraw() {
+        if (!this.currentState || !this.myId) return false;
+        const isMyTurn = this.currentState.currentPlayer === this.myId;
+        const roundActive = this.currentState.roundActive;
+        const myPlayer = this.currentState.players[this.myId];
+        const hasDrawn = myPlayer?.hasDrawn || false;
+        return isMyTurn && roundActive && !hasDrawn;
+    }
+
+    canDiscard() {
+        if (!this.currentState || !this.myId) return false;
+        const isMyTurn = this.currentState.currentPlayer === this.myId;
+        const roundActive = this.currentState.roundActive;
+        const myPlayer = this.currentState.players[this.myId];
+        const hasDrawn = myPlayer?.hasDrawn || false;
+        return isMyTurn && roundActive && hasDrawn;
     }
 
     showScreen(screen) {
@@ -152,17 +228,23 @@ class GameUI {
         this.potDisplay.textContent = state.pot;
         this.roundDisplay.textContent = state.roundNumber || 1;
 
-        // Update turn indicator
-        const currentPlayer = state.players[state.currentPlayer];
         const isMyTurn = state.currentPlayer === myId && state.roundActive;
+        const myPlayer = state.players[myId];
+        const hasDrawn = myPlayer?.hasDrawn || false;
 
+        // Update turn indicator with phase info
         if (!state.roundActive) {
             this.currentTurn.textContent = 'In attesa della prossima mano...';
             this.turnIndicator.classList.remove('your-turn');
         } else if (isMyTurn) {
-            this.currentTurn.textContent = 'È il tuo turno!';
+            if (hasDrawn) {
+                this.currentTurn.textContent = 'Trascina una carta nel pozzo per scartarla';
+            } else {
+                this.currentTurn.textContent = 'Trascina una carta dal mazzo o pozzo';
+            }
             this.turnIndicator.classList.add('your-turn');
         } else {
+            const currentPlayer = state.players[state.currentPlayer];
             this.currentTurn.textContent = `Turno di ${currentPlayer?.name || 'altro giocatore'}`;
             this.turnIndicator.classList.remove('your-turn');
         }
@@ -178,24 +260,25 @@ class GameUI {
         // Update players info bar
         this.updatePlayersInfo(state, myId);
 
-        // Update deck count
+        // Update deck - make it draggable only when it's player's turn and hasn't drawn
         this.deckCount.textContent = state.deckCount;
+        if (isMyTurn && !hasDrawn && state.deckCount > 0) {
+            this.deckElement.classList.add('can-drag');
+        } else {
+            this.deckElement.classList.remove('can-drag');
+        }
 
         // Update discard pile
-        this.renderDiscardPile(state.topDiscard);
+        this.renderDiscardPile(state.topDiscard, isMyTurn && !hasDrawn);
 
         // Update player hand
-        const myPlayer = state.players[myId];
         if (myPlayer) {
             this.myScore.textContent = myPlayer.score;
             this.myCoins.textContent = myPlayer.coins;
-
-            CardRenderer.renderHand(this.playerHand, myPlayer.hand, (index) => {
-                this.handleCardClick(index, isMyTurn);
-            });
+            this.renderHand(myPlayer.hand, isMyTurn && hasDrawn);
         }
 
-        // Update controls
+        // Update action controls
         this.updateControls(state, myId, isMyTurn);
     }
 
@@ -228,54 +311,62 @@ class GameUI {
         });
     }
 
-    renderDiscardPile(topCard) {
+    renderDiscardPile(topCard, canDrag) {
         this.discardPile.innerHTML = '';
         if (topCard) {
             const cardEl = CardRenderer.createCard(topCard);
             cardEl.classList.add('animating');
+
+            if (canDrag) {
+                cardEl.setAttribute('draggable', 'true');
+                cardEl.classList.add('can-drag');
+                cardEl.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', 'discard');
+                    e.dataTransfer.effectAllowed = 'move';
+                    cardEl.classList.add('dragging');
+                });
+                cardEl.addEventListener('dragend', () => {
+                    cardEl.classList.remove('dragging');
+                });
+            }
+
             this.discardPile.appendChild(cardEl);
         }
     }
 
-    handleCardClick(index, isMyTurn) {
-        // Deselect previous
-        this.playerHand.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+    renderHand(cards, canDiscard) {
+        this.playerHand.innerHTML = '';
 
-        // Select new
-        this.selectedCardIndex = index;
-        const cards = this.playerHand.querySelectorAll('.card');
-        if (cards[index]) {
-            cards[index].classList.add('selected');
-        }
+        cards.forEach((card, index) => {
+            const cardEl = CardRenderer.createCard(card);
+            cardEl.dataset.index = index;
 
-        // Update controls based on selection
-        if (isMyTurn && this.currentState?.roundActive) {
-            this.drawDiscardBtn.disabled = !this.currentState.topDiscard;
-            this.drawDeckBtn.disabled = this.currentState.deckCount === 0;
-        }
+            if (canDiscard) {
+                cardEl.setAttribute('draggable', 'true');
+                cardEl.classList.add('can-drag');
+                cardEl.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', `hand-${index}`);
+                    e.dataTransfer.effectAllowed = 'move';
+                    cardEl.classList.add('dragging');
+                });
+                cardEl.addEventListener('dragend', () => {
+                    cardEl.classList.remove('dragging');
+                });
+            }
+
+            this.playerHand.appendChild(cardEl);
+        });
     }
 
     updateControls(state, myId, isMyTurn) {
         const hasKnocked = state.knocker !== null;
         const myPlayer = state.players[myId];
         const canDeclare31 = myPlayer?.score === 31;
+        const hasDrawn = myPlayer?.hasDrawn || false;
 
-        // Disable all by default
-        this.drawDiscardBtn.disabled = true;
-        this.drawDeckBtn.disabled = true;
-        this.knockBtn.disabled = true;
-        this.declare31Btn.disabled = true;
-
-        if (!isMyTurn || !state.roundActive) return;
-
-        // Enable based on state
-        if (this.selectedCardIndex !== null) {
-            this.drawDiscardBtn.disabled = !state.topDiscard;
-            this.drawDeckBtn.disabled = state.deckCount === 0;
-        }
-
-        this.knockBtn.disabled = hasKnocked;
-        this.declare31Btn.disabled = !canDeclare31;
+        // Knock and declare31 only available when it's your turn and you haven't drawn yet
+        this.knockBtn.disabled = !isMyTurn || !state.roundActive || hasKnocked || hasDrawn;
+        this.declare31Btn.disabled = !isMyTurn || !state.roundActive || !canDeclare31 || hasDrawn;
     }
 
     getSelectedCardIndex() {
@@ -285,8 +376,6 @@ class GameUI {
     clearSelection() {
         this.selectedCardIndex = null;
         this.playerHand.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-        this.drawDiscardBtn.disabled = true;
-        this.drawDeckBtn.disabled = true;
     }
 
     showActionAnimation(action, playerName) {
@@ -299,6 +388,9 @@ class GameUI {
                 break;
             case 'draw-from-deck':
                 text = `${playerName} pesca dal mazzo`;
+                break;
+            case 'discard':
+                text = `${playerName} scarta`;
                 break;
             case 'knock':
                 text = `${playerName} BUSSA!`;

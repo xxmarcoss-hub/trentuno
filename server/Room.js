@@ -3,7 +3,7 @@ const Deck = require('./Deck');
 class Room {
     constructor(code, initialPot = 10) {
         this.code = code;
-        this.players = new Map(); // socketId -> { name, hand, coins, score }
+        this.players = new Map(); // socketId -> { name, hand, coins, score, hasDrawn }
         this.deck = null;
         this.discardPile = [];          // Pozzo degli scarti
         this.currentPlayerIndex = 0;
@@ -24,8 +24,9 @@ class Room {
         this.players.set(socketId, {
             name,
             hand: [],
-            coins: 0,     // Monete vinte
-            score: 0      // Punteggio mano corrente
+            coins: 0,       // Monete vinte
+            score: 0,       // Punteggio mano corrente
+            hasDrawn: false // Se ha già pescato in questo turno
         });
     }
 
@@ -109,10 +110,11 @@ class Room {
         // Primo giocatore = dopo il mazziere
         this.currentPlayerIndex = (this.dealerIndex + 1) % this.playerOrder.length;
 
-        // Distribuisci 3 carte a ogni giocatore
+        // Distribuisci 3 carte a ogni giocatore e resetta hasDrawn
         this.players.forEach((player) => {
             player.hand = this.deck.draw(3);
             player.score = this.calculateHandScore(player.hand);
+            player.hasDrawn = false;
         });
 
         // Una carta scoperta nel pozzo
@@ -130,77 +132,66 @@ class Room {
         return true;
     }
 
-    // Pesca dal pozzo e scarta una carta
-    drawFromDiscard(socketId, discardCardIndex) {
-        if (!this.isValidTurn(socketId)) return { success: false };
-        if (this.discardPile.length === 0) return { success: false };
+    // Pesca una carta (dal mazzo o dal pozzo) - FASE 1
+    drawCard(socketId, source) {
+        if (!this.isValidTurn(socketId)) return { success: false, error: 'Non è il tuo turno' };
 
         const player = this.players.get(socketId);
-        if (discardCardIndex < 0 || discardCardIndex >= player.hand.length) {
-            return { success: false };
+        if (player.hasDrawn) return { success: false, error: 'Hai già pescato' };
+
+        let drawnCard;
+
+        if (source === 'discard') {
+            if (this.discardPile.length === 0) return { success: false, error: 'Pozzo vuoto' };
+            drawnCard = this.discardPile.pop();
+        } else if (source === 'deck') {
+            // Se mazzo vuoto, ricicla pozzo
+            if (this.deck.cards.length === 0) {
+                this.recycleDeck();
+            }
+            if (this.deck.cards.length === 0) return { success: false, error: 'Mazzo vuoto' };
+            drawnCard = this.deck.draw(1)[0];
+        } else {
+            return { success: false, error: 'Sorgente non valida' };
         }
 
-        // Prendi carta dal pozzo
-        const cardFromPile = this.discardPile.pop();
-        // Scarta carta dalla mano
-        const cardToDiscard = player.hand.splice(discardCardIndex, 1)[0];
-
-        // Aggiungi carta pescata alla mano
-        player.hand.push(cardFromPile);
-        // Metti carta scartata nel pozzo
-        this.discardPile.push(cardToDiscard);
-
-        // Aggiorna punteggio
+        // Aggiungi carta alla mano (ora ha 4 carte)
+        player.hand.push(drawnCard);
+        player.hasDrawn = true;
         player.score = this.calculateHandScore(player.hand);
-
-        // Avanza turno
-        const turnResult = this.advanceTurn();
 
         return {
             success: true,
-            action: 'draw-from-discard',
-            drawnCard: cardFromPile,
-            discardedCard: cardToDiscard,
-            roundEnd: turnResult
+            action: source === 'discard' ? 'draw-from-discard' : 'draw-from-deck',
+            drawnCard: drawnCard
         };
     }
 
-    // Pesca dal mazzo e scarta una carta
-    drawFromDeck(socketId, discardCardIndex) {
-        if (!this.isValidTurn(socketId)) return { success: false };
+    // Scarta una carta - FASE 2
+    discardCard(socketId, cardIndex) {
+        if (!this.isValidTurn(socketId)) return { success: false, error: 'Non è il tuo turno' };
 
         const player = this.players.get(socketId);
-        if (discardCardIndex < 0 || discardCardIndex >= player.hand.length) {
-            return { success: false };
+        if (!player.hasDrawn) return { success: false, error: 'Devi prima pescare' };
+        if (cardIndex < 0 || cardIndex >= player.hand.length) {
+            return { success: false, error: 'Indice carta non valido' };
         }
 
-        // Se mazzo vuoto, ricicla pozzo
-        if (this.deck.cards.length === 0) {
-            this.recycleDeck();
-        }
-        if (this.deck.cards.length === 0) return { success: false };
-
-        // Pesca dal mazzo
-        const drawnCards = this.deck.draw(1);
-        // Scarta carta dalla mano
-        const cardToDiscard = player.hand.splice(discardCardIndex, 1)[0];
-
-        // Aggiungi carta pescata alla mano
-        player.hand.push(drawnCards[0]);
-        // Metti carta scartata nel pozzo
-        this.discardPile.push(cardToDiscard);
+        // Scarta la carta
+        const discardedCard = player.hand.splice(cardIndex, 1)[0];
+        this.discardPile.push(discardedCard);
 
         // Aggiorna punteggio
         player.score = this.calculateHandScore(player.hand);
+        player.hasDrawn = false;
 
         // Avanza turno
         const turnResult = this.advanceTurn();
 
         return {
             success: true,
-            action: 'draw-from-deck',
-            drawnCard: drawnCards[0],
-            discardedCard: cardToDiscard,
+            action: 'discard',
+            discardedCard: discardedCard,
             roundEnd: turnResult
         };
     }
@@ -209,6 +200,9 @@ class Room {
     knock(socketId) {
         if (!this.isValidTurn(socketId)) return { success: false };
         if (this.knocker) return { success: false }; // Qualcuno ha già bussato
+
+        const player = this.players.get(socketId);
+        if (player.hasDrawn) return { success: false, error: 'Devi prima scartare' };
 
         this.knocker = socketId;
         // Ogni altro giocatore fa ancora un turno
@@ -230,6 +224,7 @@ class Room {
         if (!this.isValidTurn(socketId)) return { success: false };
 
         const player = this.players.get(socketId);
+        if (player.hasDrawn) return { success: false, error: 'Devi prima scartare' };
         if (player.score !== 31) return { success: false };
 
         this.winner31 = socketId;
@@ -256,6 +251,12 @@ class Room {
 
     // Avanza al prossimo turno
     advanceTurn() {
+        // Resetta hasDrawn per il giocatore corrente
+        const currentPlayer = this.players.get(this.getCurrentPlayerId());
+        if (currentPlayer) {
+            currentPlayer.hasDrawn = false;
+        }
+
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.playerOrder.length;
 
         // Se qualcuno ha bussato, decrementa contatore
@@ -372,11 +373,15 @@ class Room {
             ? this.discardPile[this.discardPile.length - 1]
             : null;
 
+        const currentPlayerId = this.getCurrentPlayerId();
+        const currentPlayerData = this.players.get(currentPlayerId);
+
         const state = {
             started: this.gameStarted,
             roundActive: this.roundActive,
             roundNumber: this.roundNumber,
-            currentPlayer: this.getCurrentPlayerId(),
+            currentPlayer: currentPlayerId,
+            currentPlayerHasDrawn: currentPlayerData?.hasDrawn || false,
             dealerIndex: this.dealerIndex,
             dealer: this.playerOrder[this.dealerIndex],
             discardPile: this.discardPile,
@@ -394,9 +399,10 @@ class Room {
             state.players[id] = {
                 name: player.name,
                 cardCount: player.hand.length,
-                hand: player.hand,        // Server invia tutto, client filtra
-                score: player.score,      // Nascosto agli altri dal client
-                coins: player.coins
+                hand: player.hand,
+                score: player.score,
+                coins: player.coins,
+                hasDrawn: player.hasDrawn
             };
         });
 

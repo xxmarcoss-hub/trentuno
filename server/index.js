@@ -113,30 +113,26 @@ io.on('connection', (socket) => {
         const room = rooms.get(socket.roomCode);
         if (room && room.players.size >= 2 && !room.gameStarted) {
             room.startGame();
-            io.to(socket.roomCode).emit('game-started', room.getGameState());
+            const gameState = room.getGameState();
+            console.log('Sending game state, roundActive:', gameState.roundActive);
+            io.to(socket.roomCode).emit('game-started', gameState);
             console.log(`Game started in room ${socket.roomCode}`);
         }
     });
 
-    // Draw from discard pile
-    socket.on('draw-from-discard', (cardIndexToDiscard) => {
+    // Draw card (from deck or discard) - PHASE 1
+    socket.on('draw-card', (source) => {
         const room = rooms.get(socket.roomCode);
         if (room) {
-            const result = room.drawFromDiscard(socket.id, cardIndexToDiscard);
+            const result = room.drawCard(socket.id, source);
             if (result.success) {
                 // Notify all players about the action for animation
                 io.to(socket.roomCode).emit('player-action', {
                     playerId: socket.id,
                     playerName: socket.playerName,
                     action: result.action,
-                    drawnCard: result.drawnCard,
-                    discardedCard: result.discardedCard
+                    drawnCard: result.drawnCard
                 });
-
-                // Check if round ended
-                if (result.roundEnd) {
-                    io.to(socket.roomCode).emit('round-end', result.roundEnd);
-                }
 
                 // Send updated game state
                 io.to(socket.roomCode).emit('game-update', room.getGameState());
@@ -144,18 +140,17 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Draw from deck
-    socket.on('draw-from-deck', (cardIndexToDiscard) => {
+    // Discard card - PHASE 2
+    socket.on('discard-card', (cardIndex) => {
         const room = rooms.get(socket.roomCode);
         if (room) {
-            const result = room.drawFromDeck(socket.id, cardIndexToDiscard);
+            const result = room.discardCard(socket.id, cardIndex);
             if (result.success) {
                 // Notify all players about the action for animation
                 io.to(socket.roomCode).emit('player-action', {
                     playerId: socket.id,
                     playerName: socket.playerName,
                     action: result.action,
-                    drawnCard: result.drawnCard,
                     discardedCard: result.discardedCard
                 });
 

@@ -106,6 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('game-started', (state) => {
+        console.log('game-started received:', state);
+        console.log('roundActive:', state.roundActive);
         ui.showGame(currentRoomCode);
         ui.updateGameState(state, socket.id);
     });
@@ -131,25 +133,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1600);
     });
 
-    // Trentuno game controls
+    // Trentuno game controls (Drag and Drop)
 
-    // Draw from discard pile
-    ui.drawDiscardBtn.addEventListener('click', () => {
-        const index = ui.getSelectedCardIndex();
-        if (index !== null) {
-            socket.drawFromDiscard(index);
-            ui.clearSelection();
-        }
-    });
+    // Called when player drags a card from deck or discard pile to hand
+    ui.onDrawCard = (source) => {
+        socket.drawCard(source); // 'deck' or 'discard'
+    };
 
-    // Draw from deck
-    ui.drawDeckBtn.addEventListener('click', () => {
-        const index = ui.getSelectedCardIndex();
-        if (index !== null) {
-            socket.drawFromDeck(index);
-            ui.clearSelection();
-        }
-    });
+    // Called when player drags a card from hand to discard pile
+    ui.onDiscardCard = (cardIndex) => {
+        socket.discardCard(cardIndex);
+    };
 
     // Knock
     ui.knockBtn.addEventListener('click', () => {

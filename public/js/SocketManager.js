@@ -34,12 +34,12 @@ class SocketManager {
 
     // Trentuno game actions
 
-    drawFromDiscard(cardIndexToDiscard) {
-        this.socket.emit('draw-from-discard', cardIndexToDiscard);
+    drawCard(source) {
+        this.socket.emit('draw-card', source); // 'deck' or 'discard'
     }
 
-    drawFromDeck(cardIndexToDiscard) {
-        this.socket.emit('draw-from-deck', cardIndexToDiscard);
+    discardCard(cardIndex) {
+        this.socket.emit('discard-card', cardIndex);
     }
 
     knock() {

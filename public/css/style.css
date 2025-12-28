@@ -481,14 +481,11 @@ input[type="text"]:focus {
     height: 100px;
     background: white;
     border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 6px;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    overflow: hidden;
 }
 
 .card:hover {
@@ -501,40 +498,204 @@ input[type="text"]:focus {
     box-shadow: 0 0 0 3px var(--primary-color), 0 8px 16px rgba(0,0,0,0.4);
 }
 
-.card-back {
-    background: linear-gradient(135deg, #1e3a5f 25%, #2563eb 50%, #1e3a5f 75%);
-    background-size: 20px 20px;
-    cursor: default;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.card-back:hover {
-    transform: none;
-}
-
-.card .value {
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.card .suit {
-    font-size: 1.5rem;
-    text-align: center;
-}
-
-.card .value-bottom {
-    align-self: flex-end;
-    transform: rotate(180deg);
-}
-
 .card.hearts, .card.diamonds {
     color: #dc2626;
 }
 
 .card.clubs, .card.spades {
     color: #1e293b;
+}
+
+/* Card Corners */
+.card-corner {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    z-index: 2;
+}
+
+.card-corner.top-left {
+    top: 3px;
+    left: 4px;
+}
+
+.card-corner.bottom-right {
+    bottom: 3px;
+    right: 4px;
+    transform: rotate(180deg);
+}
+
+.corner-value {
+    font-weight: bold;
+    font-size: 0.75rem;
+}
+
+.corner-suit {
+    font-size: 0.65rem;
+}
+
+/* Card Center */
+.card-center {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Pip Grid for number cards */
+.pip-grid {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.pip {
+    position: absolute;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+/* Pip positions - horizontal */
+.pip-top-left, .pip-top-mid-left, .pip-mid-left, .pip-bot-mid-left, .pip-bot-left { left: 15px; }
+.pip-top-center, .pip-top-mid-center, .pip-mid-center, .pip-bot-mid-center, .pip-bot-center { left: 50%; transform: translateX(-50%); }
+.pip-top-right, .pip-top-mid-right, .pip-mid-right, .pip-bot-mid-right, .pip-bot-right { right: 15px; }
+
+/* Pip positions - vertical */
+.pip-top-left, .pip-top-center, .pip-top-right { top: 15px; }
+.pip-top-mid-left, .pip-top-mid-center, .pip-top-mid-right { top: 30px; }
+.pip-mid-left, .pip-mid-center, .pip-mid-right { top: 50%; transform: translateY(-50%); }
+.pip-mid-center { transform: translate(-50%, -50%); }
+.pip-bot-mid-left, .pip-bot-mid-center, .pip-bot-mid-right { bottom: 30px; }
+.pip-bot-left, .pip-bot-center, .pip-bot-right { bottom: 15px; }
+
+/* Bottom pips rotated 180deg */
+.pip-bot-left, .pip-bot-center, .pip-bot-right,
+.pip-bot-mid-left, .pip-bot-mid-center, .pip-bot-mid-right {
+    transform: rotate(180deg);
+}
+
+.pip-bot-center, .pip-bot-mid-center {
+    transform: translateX(-50%) rotate(180deg);
+}
+
+/* Ace Symbol */
+.ace-symbol {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+/* Face Cards (J, Q, K) */
+.face-card {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.face-top, .face-bottom {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.face-bottom {
+    transform: rotate(180deg);
+}
+
+.face-figure {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.face-design {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+}
+
+.face-letter {
+    font-size: 1.1rem;
+    font-weight: bold;
+    font-family: 'Times New Roman', serif;
+}
+
+.face-suit {
+    font-size: 0.6rem;
+}
+
+.face-suit.top-suit {
+    margin-bottom: -2px;
+}
+
+.face-suit.bottom-suit {
+    margin-top: -2px;
+}
+
+/* Face card colors by figure */
+.face-figure[data-figure="jack"] .face-letter {
+    color: inherit;
+}
+
+.face-figure[data-figure="queen"] .face-letter {
+    color: inherit;
+}
+
+.face-figure[data-figure="king"] .face-letter {
+    color: inherit;
+}
+
+/* Card Back */
+.card-back {
+    cursor: default;
+}
+
+.card-back:hover {
+    transform: none;
+}
+
+.card-back-pattern {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #1e3a5f 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+}
+
+.back-design {
+    width: 100%;
+    height: 100%;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    background:
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 3px,
+            rgba(255,255,255,0.1) 3px,
+            rgba(255,255,255,0.1) 6px
+        ),
+        repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 3px,
+            rgba(255,255,255,0.1) 3px,
+            rgba(255,255,255,0.1) 6px
+        );
 }
 
 /* Card Animations */
@@ -698,7 +859,6 @@ input[type="text"]:focus {
 .player-result .card {
     width: 45px;
     height: 65px;
-    font-size: 0.7rem;
     cursor: default;
 }
 
@@ -706,8 +866,28 @@ input[type="text"]:focus {
     transform: none;
 }
 
-.player-result .card .suit {
-    font-size: 1rem;
+.player-result .card .corner-value {
+    font-size: 0.5rem;
+}
+
+.player-result .card .corner-suit {
+    font-size: 0.45rem;
+}
+
+.player-result .card .pip {
+    font-size: 0.55rem;
+}
+
+.player-result .card .ace-symbol {
+    font-size: 1.5rem;
+}
+
+.player-result .card .face-letter {
+    font-size: 0.7rem;
+}
+
+.player-result .card .face-suit {
+    font-size: 0.4rem;
 }
 
 .result-footer {
@@ -882,6 +1062,37 @@ input[type="text"]:focus {
     .card {
         width: 55px;
         height: 80px;
+    }
+
+    .corner-value {
+        font-size: 0.6rem;
+    }
+
+    .corner-suit {
+        font-size: 0.5rem;
+    }
+
+    .pip {
+        font-size: 0.7rem;
+    }
+
+    .pip-top-left, .pip-top-mid-left, .pip-mid-left, .pip-bot-mid-left, .pip-bot-left { left: 12px; }
+    .pip-top-right, .pip-top-mid-right, .pip-mid-right, .pip-bot-mid-right, .pip-bot-right { right: 12px; }
+    .pip-top-left, .pip-top-center, .pip-top-right { top: 12px; }
+    .pip-top-mid-left, .pip-top-mid-center, .pip-top-mid-right { top: 24px; }
+    .pip-bot-mid-left, .pip-bot-mid-center, .pip-bot-mid-right { bottom: 24px; }
+    .pip-bot-left, .pip-bot-center, .pip-bot-right { bottom: 12px; }
+
+    .ace-symbol {
+        font-size: 2rem;
+    }
+
+    .face-letter {
+        font-size: 0.9rem;
+    }
+
+    .face-suit {
+        font-size: 0.5rem;
     }
 
     .table-area {

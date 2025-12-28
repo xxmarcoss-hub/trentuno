@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gioco di Carte Online</title>
+    <title>Trentuno - Gioco di Carte Online</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <!-- Lobby Screen -->
     <div id="lobby-screen" class="screen">
         <div class="lobby-container">
-            <h1>Gioco di Carte</h1>
+            <h1>Trentuno</h1>
+            <p class="subtitle">Gioco di carte online con video chat</p>
 
             <div class="lobby-form">
                 <input type="text" id="player-name" placeholder="Il tuo nome" maxlength="20">
@@ -55,6 +56,10 @@
                 <span id="game-room-code"></span>
                 <button id="game-copy-link" class="btn btn-small">Copia Link</button>
             </div>
+            <div class="game-stats">
+                <span class="pot-display">Gruzzolo: <span id="pot-display">10</span></span>
+                <span class="round-display">Mano: <span id="round-display">1</span></span>
+            </div>
             <div class="media-controls">
                 <button id="toggle-mute" class="btn btn-icon" title="Mute/Unmute">
                     <span class="icon-mic">🎤</span>
@@ -82,31 +87,88 @@
             <!-- Turn indicator -->
             <div class="turn-indicator">
                 <span id="current-turn">In attesa...</span>
+                <span id="knock-indicator" class="knock-indicator hidden">BUSSATA!</span>
             </div>
 
-            <!-- Table (center cards) -->
+            <!-- Players info bar -->
+            <div id="players-info" class="players-info"></div>
+
+            <!-- Table area -->
             <div class="table-area">
-                <div id="table-cards" class="table-cards"></div>
+                <!-- Deck -->
                 <div class="deck-area">
                     <div id="deck" class="card card-back">
                         <span id="deck-count">52</span>
                     </div>
+                    <span class="area-label">Mazzo</span>
+                </div>
+
+                <!-- Discard pile -->
+                <div class="discard-area">
+                    <div id="discard-pile" class="discard-pile"></div>
+                    <span class="area-label">Pozzo</span>
                 </div>
             </div>
 
             <!-- Player's hand -->
             <div class="hand-area">
-                <h3>Le tue carte</h3>
+                <div class="hand-header">
+                    <h3>Le tue carte</h3>
+                    <div class="my-stats">
+                        <span>Punteggio: <strong id="my-score">0</strong></span>
+                        <span>Monete: <strong id="my-coins">0</strong></span>
+                    </div>
+                </div>
                 <div id="player-hand" class="player-hand"></div>
             </div>
 
             <!-- Game controls -->
             <div class="game-controls">
-                <button id="play-card-btn" class="btn btn-primary" disabled>Gioca Carta</button>
-                <button id="draw-card-btn" class="btn btn-secondary">Pesca</button>
-                <button id="pass-btn" class="btn btn-secondary">Passa</button>
+                <div class="draw-controls">
+                    <button id="draw-discard-btn" class="btn btn-secondary" disabled>
+                        Pesca dal Pozzo
+                    </button>
+                    <button id="draw-deck-btn" class="btn btn-secondary" disabled>
+                        Pesca dal Mazzo
+                    </button>
+                </div>
+                <div class="action-controls">
+                    <button id="knock-btn" class="btn btn-warning" disabled>
+                        Bussa
+                    </button>
+                    <button id="declare-31-btn" class="btn btn-success" disabled>
+                        Dichiara 31!
+                    </button>
+                </div>
             </div>
         </section>
+    </div>
+
+    <!-- Round Result Modal -->
+    <div id="round-result-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="result-title">Fine Mano</h2>
+            <p id="result-message" class="result-message"></p>
+            <div id="hands-grid" class="hands-grid"></div>
+            <div class="result-footer">
+                <p id="pot-remaining">Monete rimanenti: <span>0</span></p>
+                <button id="next-round-btn" class="btn btn-primary">Prossima Mano</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal hidden">
+        <div class="modal-content game-over">
+            <h2>Fine Partita!</h2>
+            <div id="final-results" class="final-results"></div>
+            <button id="back-to-lobby-btn" class="btn btn-primary">Torna alla Lobby</button>
+        </div>
+    </div>
+
+    <!-- Action Animation Overlay -->
+    <div id="action-overlay" class="action-overlay hidden">
+        <div id="action-text" class="action-text"></div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>

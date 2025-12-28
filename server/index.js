@@ -108,43 +108,125 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Start game
+    // Start game (first round)
     socket.on('start-game', () => {
         const room = rooms.get(socket.roomCode);
-        if (room && room.players.size >= 2) {
+        if (room && room.players.size >= 2 && !room.gameStarted) {
             room.startGame();
             io.to(socket.roomCode).emit('game-started', room.getGameState());
+            console.log(`Game started in room ${socket.roomCode}`);
         }
     });
 
-    // Play card
-    socket.on('play-card', (cardIndex) => {
+    // Draw from discard pile
+    socket.on('draw-from-discard', (cardIndexToDiscard) => {
         const room = rooms.get(socket.roomCode);
         if (room) {
-            const result = room.playCard(socket.id, cardIndex);
+            const result = room.drawFromDiscard(socket.id, cardIndexToDiscard);
             if (result.success) {
+                // Notify all players about the action for animation
+                io.to(socket.roomCode).emit('player-action', {
+                    playerId: socket.id,
+                    playerName: socket.playerName,
+                    action: result.action,
+                    drawnCard: result.drawnCard,
+                    discardedCard: result.discardedCard
+                });
+
+                // Check if round ended
+                if (result.roundEnd) {
+                    io.to(socket.roomCode).emit('round-end', result.roundEnd);
+                }
+
+                // Send updated game state
                 io.to(socket.roomCode).emit('game-update', room.getGameState());
             }
         }
     });
 
-    // Draw card
-    socket.on('draw-card', () => {
+    // Draw from deck
+    socket.on('draw-from-deck', (cardIndexToDiscard) => {
         const room = rooms.get(socket.roomCode);
         if (room) {
-            const result = room.drawCard(socket.id);
+            const result = room.drawFromDeck(socket.id, cardIndexToDiscard);
             if (result.success) {
+                // Notify all players about the action for animation
+                io.to(socket.roomCode).emit('player-action', {
+                    playerId: socket.id,
+                    playerName: socket.playerName,
+                    action: result.action,
+                    drawnCard: result.drawnCard,
+                    discardedCard: result.discardedCard
+                });
+
+                // Check if round ended
+                if (result.roundEnd) {
+                    io.to(socket.roomCode).emit('round-end', result.roundEnd);
+                }
+
+                // Send updated game state
                 io.to(socket.roomCode).emit('game-update', room.getGameState());
             }
         }
     });
 
-    // Pass turn
-    socket.on('pass-turn', () => {
+    // Knock
+    socket.on('knock', () => {
         const room = rooms.get(socket.roomCode);
         if (room) {
-            room.passTurn(socket.id);
-            io.to(socket.roomCode).emit('game-update', room.getGameState());
+            const result = room.knock(socket.id);
+            if (result.success) {
+                // Notify all players about the knock
+                io.to(socket.roomCode).emit('player-action', {
+                    playerId: socket.id,
+                    playerName: socket.playerName,
+                    action: 'knock'
+                });
+
+                // Check if round ended (shouldn't happen immediately after knock)
+                if (result.roundEnd) {
+                    io.to(socket.roomCode).emit('round-end', result.roundEnd);
+                }
+
+                // Send updated game state
+                io.to(socket.roomCode).emit('game-update', room.getGameState());
+
+                console.log(`${socket.playerName} knocked in room ${socket.roomCode}`);
+            }
+        }
+    });
+
+    // Declare 31
+    socket.on('declare-31', () => {
+        const room = rooms.get(socket.roomCode);
+        if (room) {
+            const result = room.declare31(socket.id);
+            if (result.success) {
+                // Notify all players about the declaration
+                io.to(socket.roomCode).emit('player-action', {
+                    playerId: socket.id,
+                    playerName: socket.playerName,
+                    action: 'declare-31'
+                });
+
+                // Round always ends with 31 declaration
+                io.to(socket.roomCode).emit('round-end', result.roundEnd);
+
+                // Send updated game state
+                io.to(socket.roomCode).emit('game-update', room.getGameState());
+
+                console.log(`${socket.playerName} declared 31 in room ${socket.roomCode}`);
+            }
+        }
+    });
+
+    // Start next round
+    socket.on('next-round', () => {
+        const room = rooms.get(socket.roomCode);
+        if (room && room.gameStarted && !room.roundActive && room.pot > 0) {
+            room.startRound();
+            io.to(socket.roomCode).emit('round-started', room.getGameState());
+            console.log(`New round started in room ${socket.roomCode} (round ${room.roundNumber})`);
         }
     });
 

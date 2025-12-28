@@ -32,16 +32,26 @@ class SocketManager {
         this.socket.emit('start-game');
     }
 
-    playCard(cardIndex) {
-        this.socket.emit('play-card', cardIndex);
+    // Trentuno game actions
+
+    drawFromDiscard(cardIndexToDiscard) {
+        this.socket.emit('draw-from-discard', cardIndexToDiscard);
     }
 
-    drawCard() {
-        this.socket.emit('draw-card');
+    drawFromDeck(cardIndexToDiscard) {
+        this.socket.emit('draw-from-deck', cardIndexToDiscard);
     }
 
-    passTurn() {
-        this.socket.emit('pass-turn');
+    knock() {
+        this.socket.emit('knock');
+    }
+
+    declare31() {
+        this.socket.emit('declare-31');
+    }
+
+    nextRound() {
+        this.socket.emit('next-round');
     }
 
     // WebRTC signaling

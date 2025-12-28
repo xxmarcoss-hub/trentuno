@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentRoomCode = null;
     let players = {};
+    let lastRoundResult = null;
 
     // Check URL for room code
     const urlParams = new URLSearchParams(window.location.search);
@@ -113,21 +114,67 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.updateGameState(state, socket.id);
     });
 
-    // Game controls
-    ui.playCardBtn.addEventListener('click', () => {
+    socket.on('round-started', (state) => {
+        ui.hideRoundResult();
+        ui.updateGameState(state, socket.id);
+    });
+
+    socket.on('player-action', (data) => {
+        ui.showActionAnimation(data.action, data.playerName);
+    });
+
+    socket.on('round-end', (result) => {
+        lastRoundResult = result;
+        // Delay showing result to let action animation play
+        setTimeout(() => {
+            ui.showRoundResult(result);
+        }, 1600);
+    });
+
+    // Trentuno game controls
+
+    // Draw from discard pile
+    ui.drawDiscardBtn.addEventListener('click', () => {
         const index = ui.getSelectedCardIndex();
         if (index !== null) {
-            socket.playCard(index);
+            socket.drawFromDiscard(index);
             ui.clearSelection();
         }
     });
 
-    ui.drawCardBtn.addEventListener('click', () => {
-        socket.drawCard();
+    // Draw from deck
+    ui.drawDeckBtn.addEventListener('click', () => {
+        const index = ui.getSelectedCardIndex();
+        if (index !== null) {
+            socket.drawFromDeck(index);
+            ui.clearSelection();
+        }
     });
 
-    ui.passBtn.addEventListener('click', () => {
-        socket.passTurn();
+    // Knock
+    ui.knockBtn.addEventListener('click', () => {
+        socket.knock();
+    });
+
+    // Declare 31
+    ui.declare31Btn.addEventListener('click', () => {
+        socket.declare31();
+    });
+
+    // Next round button
+    ui.nextRoundBtn.addEventListener('click', () => {
+        if (lastRoundResult && lastRoundResult.gameOver) {
+            ui.showGameOver(lastRoundResult.finalWinners);
+        } else {
+            socket.nextRound();
+        }
+    });
+
+    // Back to lobby
+    ui.backToLobbyBtn.addEventListener('click', () => {
+        ui.hideGameOver();
+        ui.showLobby();
+        window.location.reload();
     });
 
     // Media controls

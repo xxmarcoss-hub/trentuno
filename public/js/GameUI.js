@@ -27,17 +27,46 @@ class GameUI {
         this.toggleVideoBtn = document.getElementById('toggle-video');
         this.videosContainer = document.getElementById('videos-container');
         this.localVideo = document.getElementById('local-video');
+
+        // Trentuno game elements
+        this.potDisplay = document.getElementById('pot-display');
+        this.roundDisplay = document.getElementById('round-display');
         this.currentTurn = document.getElementById('current-turn');
         this.turnIndicator = document.querySelector('.turn-indicator');
-        this.tableCards = document.getElementById('table-cards');
+        this.knockIndicator = document.getElementById('knock-indicator');
+        this.playersInfo = document.getElementById('players-info');
         this.deckCount = document.getElementById('deck-count');
+        this.discardPile = document.getElementById('discard-pile');
         this.playerHand = document.getElementById('player-hand');
-        this.playCardBtn = document.getElementById('play-card-btn');
-        this.drawCardBtn = document.getElementById('draw-card-btn');
-        this.passBtn = document.getElementById('pass-btn');
+        this.myScore = document.getElementById('my-score');
+        this.myCoins = document.getElementById('my-coins');
+
+        // Game controls
+        this.drawDiscardBtn = document.getElementById('draw-discard-btn');
+        this.drawDeckBtn = document.getElementById('draw-deck-btn');
+        this.knockBtn = document.getElementById('knock-btn');
+        this.declare31Btn = document.getElementById('declare-31-btn');
+
+        // Modals
+        this.roundResultModal = document.getElementById('round-result-modal');
+        this.resultTitle = document.getElementById('result-title');
+        this.resultMessage = document.getElementById('result-message');
+        this.handsGrid = document.getElementById('hands-grid');
+        this.potRemaining = document.getElementById('pot-remaining');
+        this.nextRoundBtn = document.getElementById('next-round-btn');
+
+        this.gameOverModal = document.getElementById('game-over-modal');
+        this.finalResults = document.getElementById('final-results');
+        this.backToLobbyBtn = document.getElementById('back-to-lobby-btn');
+
+        // Action overlay
+        this.actionOverlay = document.getElementById('action-overlay');
+        this.actionText = document.getElementById('action-text');
 
         this.selectedCardIndex = null;
         this.players = {};
+        this.currentState = null;
+        this.myId = null;
     }
 
     showScreen(screen) {
@@ -88,7 +117,6 @@ class GameUI {
     }
 
     addRemoteVideo(peerId, stream, playerName) {
-        // Check if video already exists
         if (document.getElementById(`video-${peerId}`)) return;
 
         const wrapper = document.createElement('div');
@@ -117,11 +145,21 @@ class GameUI {
     }
 
     updateGameState(state, myId) {
+        this.currentState = state;
+        this.myId = myId;
+
+        // Update game info
+        this.potDisplay.textContent = state.pot;
+        this.roundDisplay.textContent = state.roundNumber || 1;
+
         // Update turn indicator
         const currentPlayer = state.players[state.currentPlayer];
-        const isMyTurn = state.currentPlayer === myId;
+        const isMyTurn = state.currentPlayer === myId && state.roundActive;
 
-        if (isMyTurn) {
+        if (!state.roundActive) {
+            this.currentTurn.textContent = 'In attesa della prossima mano...';
+            this.turnIndicator.classList.remove('your-turn');
+        } else if (isMyTurn) {
             this.currentTurn.textContent = 'È il tuo turno!';
             this.turnIndicator.classList.add('your-turn');
         } else {
@@ -129,25 +167,115 @@ class GameUI {
             this.turnIndicator.classList.remove('your-turn');
         }
 
-        // Update table
-        CardRenderer.renderTable(this.tableCards, state.table);
+        // Update knock indicator
+        if (state.knocker) {
+            this.knockIndicator.classList.remove('hidden');
+            this.knockIndicator.textContent = `${state.knockerName} ha bussato!`;
+        } else {
+            this.knockIndicator.classList.add('hidden');
+        }
+
+        // Update players info bar
+        this.updatePlayersInfo(state, myId);
 
         // Update deck count
         this.deckCount.textContent = state.deckCount;
 
+        // Update discard pile
+        this.renderDiscardPile(state.topDiscard);
+
         // Update player hand
         const myPlayer = state.players[myId];
         if (myPlayer) {
+            this.myScore.textContent = myPlayer.score;
+            this.myCoins.textContent = myPlayer.coins;
+
             CardRenderer.renderHand(this.playerHand, myPlayer.hand, (index) => {
-                this.selectedCardIndex = index;
-                this.playCardBtn.disabled = !isMyTurn;
+                this.handleCardClick(index, isMyTurn);
             });
         }
 
         // Update controls
-        this.playCardBtn.disabled = !isMyTurn || this.selectedCardIndex === null;
-        this.drawCardBtn.disabled = !isMyTurn || state.deckCount === 0;
-        this.passBtn.disabled = !isMyTurn;
+        this.updateControls(state, myId, isMyTurn);
+    }
+
+    updatePlayersInfo(state, myId) {
+        this.playersInfo.innerHTML = '';
+
+        state.playerOrder.forEach(playerId => {
+            const player = state.players[playerId];
+            if (!player) return;
+
+            const card = document.createElement('div');
+            card.className = 'player-info-card';
+
+            if (playerId === state.currentPlayer && state.roundActive) {
+                card.classList.add('current-turn');
+            }
+            if (playerId === state.knocker) {
+                card.classList.add('knocked');
+            }
+            if (playerId === myId) {
+                card.classList.add('is-me');
+            }
+
+            card.innerHTML = `
+                <div class="player-info-name">${player.name}${playerId === myId ? ' (Tu)' : ''}</div>
+                <div class="player-info-coins">${player.coins} monete</div>
+            `;
+
+            this.playersInfo.appendChild(card);
+        });
+    }
+
+    renderDiscardPile(topCard) {
+        this.discardPile.innerHTML = '';
+        if (topCard) {
+            const cardEl = CardRenderer.createCard(topCard);
+            cardEl.classList.add('animating');
+            this.discardPile.appendChild(cardEl);
+        }
+    }
+
+    handleCardClick(index, isMyTurn) {
+        // Deselect previous
+        this.playerHand.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+
+        // Select new
+        this.selectedCardIndex = index;
+        const cards = this.playerHand.querySelectorAll('.card');
+        if (cards[index]) {
+            cards[index].classList.add('selected');
+        }
+
+        // Update controls based on selection
+        if (isMyTurn && this.currentState?.roundActive) {
+            this.drawDiscardBtn.disabled = !this.currentState.topDiscard;
+            this.drawDeckBtn.disabled = this.currentState.deckCount === 0;
+        }
+    }
+
+    updateControls(state, myId, isMyTurn) {
+        const hasKnocked = state.knocker !== null;
+        const myPlayer = state.players[myId];
+        const canDeclare31 = myPlayer?.score === 31;
+
+        // Disable all by default
+        this.drawDiscardBtn.disabled = true;
+        this.drawDeckBtn.disabled = true;
+        this.knockBtn.disabled = true;
+        this.declare31Btn.disabled = true;
+
+        if (!isMyTurn || !state.roundActive) return;
+
+        // Enable based on state
+        if (this.selectedCardIndex !== null) {
+            this.drawDiscardBtn.disabled = !state.topDiscard;
+            this.drawDeckBtn.disabled = state.deckCount === 0;
+        }
+
+        this.knockBtn.disabled = hasKnocked;
+        this.declare31Btn.disabled = !canDeclare31;
     }
 
     getSelectedCardIndex() {
@@ -157,12 +285,129 @@ class GameUI {
     clearSelection() {
         this.selectedCardIndex = null;
         this.playerHand.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-        this.playCardBtn.disabled = true;
+        this.drawDiscardBtn.disabled = true;
+        this.drawDeckBtn.disabled = true;
+    }
+
+    showActionAnimation(action, playerName) {
+        let text = '';
+        let className = '';
+
+        switch (action) {
+            case 'draw-from-discard':
+                text = `${playerName} pesca dal pozzo`;
+                break;
+            case 'draw-from-deck':
+                text = `${playerName} pesca dal mazzo`;
+                break;
+            case 'knock':
+                text = `${playerName} BUSSA!`;
+                className = 'knock';
+                break;
+            case 'declare-31':
+                text = `${playerName} TRENTUNO!`;
+                className = 'declare-31';
+                break;
+            default:
+                return;
+        }
+
+        this.actionText.textContent = text;
+        this.actionText.className = 'action-text ' + className;
+        this.actionOverlay.classList.remove('hidden');
+
+        setTimeout(() => {
+            this.actionOverlay.classList.add('hidden');
+        }, 1500);
+    }
+
+    showRoundResult(result) {
+        const winnersNames = result.winners.map(id => result.players[id].name).join(', ');
+
+        // Set title
+        if (result.reason === '31-declared') {
+            this.resultTitle.textContent = 'TRENTUNO!';
+            this.resultMessage.textContent = `${winnersNames} ha dichiarato 31 e vince 2 monete!`;
+        } else {
+            this.resultTitle.textContent = 'Fine Mano';
+            const winnerScore = result.players[result.winners[0]].score;
+            if (result.winners.length === 1) {
+                this.resultMessage.textContent = `${winnersNames} vince con ${winnerScore} punti! (+1 moneta)`;
+            } else {
+                this.resultMessage.textContent = `Pareggio a ${winnerScore} punti! ${winnersNames} vincono 1 moneta ciascuno`;
+            }
+        }
+
+        // Render all hands
+        this.handsGrid.innerHTML = '';
+        Object.entries(result.players).forEach(([id, player]) => {
+            const isWinner = result.winners.includes(id);
+            const div = document.createElement('div');
+            div.className = 'player-result' + (isWinner ? ' winner' : '');
+
+            div.innerHTML = `
+                <h4>${player.name}${isWinner ? ' - VINCE!' : ''}</h4>
+                <div class="score">${player.score} punti - ${player.coins} monete</div>
+                <div class="result-hand"></div>
+            `;
+
+            const handContainer = div.querySelector('.result-hand');
+            player.hand.forEach(card => {
+                const cardEl = CardRenderer.createCard(card);
+                handContainer.appendChild(cardEl);
+            });
+
+            this.handsGrid.appendChild(div);
+        });
+
+        // Update pot remaining
+        this.potRemaining.querySelector('span').textContent = result.potRemaining;
+
+        // Check if game over
+        if (result.gameOver) {
+            this.nextRoundBtn.textContent = 'Vedi Risultati';
+        } else {
+            this.nextRoundBtn.textContent = 'Prossima Mano';
+        }
+
+        this.roundResultModal.classList.remove('hidden');
+    }
+
+    hideRoundResult() {
+        this.roundResultModal.classList.add('hidden');
+    }
+
+    showGameOver(finalWinners) {
+        this.hideRoundResult();
+
+        this.finalResults.innerHTML = '';
+
+        if (finalWinners.length === 1) {
+            this.finalResults.innerHTML = `
+                <div class="final-winner">
+                    <span class="winner-name">${finalWinners[0].name}</span> vince la partita!
+                    <div class="winner-coins">${finalWinners[0].coins} monete</div>
+                </div>
+            `;
+        } else {
+            const names = finalWinners.map(w => w.name).join(', ');
+            this.finalResults.innerHTML = `
+                <div class="final-winner">
+                    <span class="winner-name">Pareggio!</span>
+                    <div class="winner-coins">${names} vincono con ${finalWinners[0].coins} monete</div>
+                </div>
+            `;
+        }
+
+        this.gameOverModal.classList.remove('hidden');
+    }
+
+    hideGameOver() {
+        this.gameOverModal.classList.add('hidden');
     }
 
     copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
-            // Could show a toast notification here
         }).catch(err => {
             console.error('Failed to copy:', err);
         });

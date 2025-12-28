@@ -37,6 +37,8 @@ class GameUI {
 
         // Trentuno game elements
         this.potDisplay = document.getElementById('pot-display');
+        this.potCoins = document.getElementById('pot-coins');
+        this.potCount = document.getElementById('pot-count');
         this.roundDisplay = document.getElementById('round-display');
         this.currentTurn = document.getElementById('current-turn');
         this.turnIndicator = document.querySelector('.turn-indicator');
@@ -134,6 +136,43 @@ class GameUI {
         });
     }
 
+    // Creates a visual pile of coins
+    createCoinsPile(count, maxVisible = 10) {
+        const fragment = document.createDocumentFragment();
+        const visibleCoins = Math.min(count, maxVisible);
+
+        for (let i = 0; i < visibleCoins; i++) {
+            const coin = document.createElement('div');
+            coin.className = 'coin';
+            fragment.appendChild(coin);
+        }
+
+        // If there are more coins than visible, show count
+        if (count > maxVisible) {
+            const countSpan = document.createElement('span');
+            countSpan.className = 'coins-count';
+            countSpan.textContent = `+${count - maxVisible}`;
+            fragment.appendChild(countSpan);
+        }
+
+        return fragment;
+    }
+
+    // Renders the central pot (gruzzolo)
+    renderPotCoins(potAmount) {
+        if (!this.potCoins) return;
+
+        this.potCoins.innerHTML = '';
+        if (potAmount > 0) {
+            const coins = this.createCoinsPile(potAmount, 10);
+            this.potCoins.appendChild(coins);
+        }
+
+        if (this.potCount) {
+            this.potCount.textContent = potAmount;
+        }
+    }
+
     canDraw() {
         if (!this.currentState || !this.myId) return false;
         const isMyTurn = this.currentState.currentPlayer === this.myId;
@@ -216,13 +255,10 @@ class GameUI {
         nameSpan.className = 'player-name';
         nameSpan.textContent = playerName || 'Giocatore';
 
-        const coinsSpan = document.createElement('span');
-        coinsSpan.className = 'player-coins';
-        coinsSpan.textContent = '0';
-
         wrapper.appendChild(video);
         wrapper.appendChild(nameSpan);
-        wrapper.appendChild(coinsSpan);
+
+        // Coins pile will be added by updateVideoWrapperCoins when game state updates
 
         // Determine position based on number of remote players
         const position = this.getNextPosition();
@@ -318,11 +354,14 @@ class GameUI {
             localWrapper.classList.toggle('current-turn', isMyTurn);
             localWrapper.classList.toggle('knocked', state.knocker === myId);
 
-            // Update local player name with coins
+            // Update local player name
             const nameSpan = localWrapper.querySelector('.player-name');
             if (nameSpan) {
-                nameSpan.textContent = `Tu (${state.players[myId].coins})`;
+                nameSpan.textContent = 'Tu';
             }
+
+            // Update local player coins pile
+            this.updateVideoWrapperCoins(localWrapper, state.players[myId].coins);
         }
 
         // Update remote player videos
@@ -336,18 +375,57 @@ class GameUI {
             wrapper.classList.toggle('current-turn', isCurrentTurn);
             wrapper.classList.toggle('knocked', isKnocker);
 
-            // Update coins display
-            const coinsSpan = wrapper.querySelector('.player-coins');
-            if (coinsSpan) {
-                coinsSpan.textContent = player.coins;
-            }
-
             // Update name
             const nameSpan = wrapper.querySelector('.player-name');
             if (nameSpan) {
                 nameSpan.textContent = player.name;
             }
+
+            // Update coins pile
+            this.updateVideoWrapperCoins(wrapper, player.coins);
         });
+    }
+
+    // Helper to update coins pile in video wrapper
+    updateVideoWrapperCoins(wrapper, coinCount) {
+        // Remove old coins display
+        const oldCoinsSpan = wrapper.querySelector('.player-coins');
+        if (oldCoinsSpan) {
+            oldCoinsSpan.remove();
+        }
+
+        const oldCoinsPile = wrapper.querySelector('.player-coins-pile');
+        if (oldCoinsPile) {
+            oldCoinsPile.remove();
+        }
+
+        // Create new coins pile
+        const coinsPileDiv = document.createElement('div');
+        coinsPileDiv.className = 'player-coins-pile';
+
+        if (coinCount > 0) {
+            // Show up to 3 visual coins + count for more
+            const visibleCoins = Math.min(coinCount, 3);
+            for (let i = 0; i < visibleCoins; i++) {
+                const coin = document.createElement('div');
+                coin.className = 'coin';
+                coinsPileDiv.appendChild(coin);
+            }
+
+            // Show count for additional coins
+            const countSpan = document.createElement('span');
+            countSpan.className = 'coins-count';
+            countSpan.textContent = coinCount;
+            coinsPileDiv.appendChild(countSpan);
+        } else {
+            // Show "0" if no coins
+            const countSpan = document.createElement('span');
+            countSpan.className = 'coins-count';
+            countSpan.textContent = '0';
+            coinsPileDiv.appendChild(countSpan);
+        }
+
+        wrapper.appendChild(coinsPileDiv);
     }
 
     updateGameState(state, myId) {
@@ -357,6 +435,9 @@ class GameUI {
         // Update game info
         this.potDisplay.textContent = state.pot;
         this.roundDisplay.textContent = state.roundNumber || 1;
+
+        // Render visual coins for central pot
+        this.renderPotCoins(state.pot);
 
         // Update video wrappers with game state
         this.updateVideoStates(state, myId);
@@ -435,10 +516,32 @@ class GameUI {
                 card.classList.add('is-me');
             }
 
-            card.innerHTML = `
-                <div class="player-info-name">${player.name}${playerId === myId ? ' (Tu)' : ''}</div>
-                <div class="player-info-coins">${player.coins} monete</div>
-            `;
+            // Create name element
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'player-info-name';
+            nameDiv.textContent = player.name + (playerId === myId ? ' (Tu)' : '');
+            card.appendChild(nameDiv);
+
+            // Create coins pile container
+            const coinsPileDiv = document.createElement('div');
+            coinsPileDiv.className = 'player-coins-pile';
+
+            if (player.coins > 0) {
+                const coins = this.createCoinsPile(player.coins, 5);
+                coinsPileDiv.appendChild(coins);
+            } else {
+                // Show "0 monete" text if no coins
+                const coinsText = document.createElement('span');
+                coinsText.className = 'player-info-coins';
+                coinsText.textContent = '0 monete';
+                coinsText.style.fontSize = '0.8rem';
+                coinsText.style.color = 'var(--text-muted)';
+                card.appendChild(coinsText);
+            }
+
+            if (player.coins > 0) {
+                card.appendChild(coinsPileDiv);
+            }
 
             this.playersInfo.appendChild(card);
         });

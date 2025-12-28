@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gioco di Carte Online</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Lobby Screen -->
+    <div id="lobby-screen" class="screen">
+        <div class="lobby-container">
+            <h1>Gioco di Carte</h1>
+
+            <div class="lobby-form">
+                <input type="text" id="player-name" placeholder="Il tuo nome" maxlength="20">
+
+                <div class="lobby-buttons">
+                    <button id="create-room-btn" class="btn btn-primary">Crea Stanza</button>
+                    <div class="divider">oppure</div>
+                    <input type="text" id="room-code-input" placeholder="Codice stanza" maxlength="6">
+                    <button id="join-room-btn" class="btn btn-secondary">Entra</button>
+                </div>
+            </div>
+
+            <p id="lobby-error" class="error"></p>
+        </div>
+    </div>
+
+    <!-- Waiting Room Screen -->
+    <div id="waiting-screen" class="screen hidden">
+        <div class="waiting-container">
+            <h2>Stanza: <span id="room-code-display"></span></h2>
+
+            <div class="room-link-container">
+                <input type="text" id="room-link" readonly>
+                <button id="copy-link-btn" class="btn btn-small">Copia Link</button>
+            </div>
+
+            <div class="players-list">
+                <h3>Giocatori (<span id="player-count">0</span>/5)</h3>
+                <ul id="players-list"></ul>
+            </div>
+
+            <button id="start-game-btn" class="btn btn-primary" disabled>Inizia Partita</button>
+            <p class="waiting-info">Servono almeno 2 giocatori per iniziare</p>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen hidden">
+        <!-- Header -->
+        <header class="game-header">
+            <div class="room-info">
+                <span id="game-room-code"></span>
+                <button id="game-copy-link" class="btn btn-small">Copia Link</button>
+            </div>
+            <div class="media-controls">
+                <button id="toggle-mute" class="btn btn-icon" title="Mute/Unmute">
+                    <span class="icon-mic">🎤</span>
+                </button>
+                <button id="toggle-video" class="btn btn-icon" title="Video On/Off">
+                    <span class="icon-video">📹</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Video Chat Section -->
+        <section class="video-section">
+            <div id="videos-container" class="videos-grid">
+                <!-- Local video -->
+                <div class="video-wrapper local">
+                    <video id="local-video" autoplay muted playsinline></video>
+                    <span class="player-name">Tu</span>
+                </div>
+                <!-- Remote videos will be added dynamically -->
+            </div>
+        </section>
+
+        <!-- Game Section -->
+        <section class="game-section">
+            <!-- Turn indicator -->
+            <div class="turn-indicator">
+                <span id="current-turn">In attesa...</span>
+            </div>
+
+            <!-- Table (center cards) -->
+            <div class="table-area">
+                <div id="table-cards" class="table-cards"></div>
+                <div class="deck-area">
+                    <div id="deck" class="card card-back">
+                        <span id="deck-count">52</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Player's hand -->
+            <div class="hand-area">
+                <h3>Le tue carte</h3>
+                <div id="player-hand" class="player-hand"></div>
+            </div>
+
+            <!-- Game controls -->
+            <div class="game-controls">
+                <button id="play-card-btn" class="btn btn-primary" disabled>Gioca Carta</button>
+                <button id="draw-card-btn" class="btn btn-secondary">Pesca</button>
+                <button id="pass-btn" class="btn btn-secondary">Passa</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/SocketManager.js"></script>
+    <script src="js/WebRTCManager.js"></script>
+    <script src="js/CardRenderer.js"></script>
+    <script src="js/GameUI.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

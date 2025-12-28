@@ -240,7 +240,7 @@ class GameUI {
             if (hasDrawn) {
                 this.currentTurn.textContent = 'Trascina una carta nel pozzo per scartarla';
             } else {
-                this.currentTurn.textContent = 'Trascina una carta dal mazzo o pozzo';
+                this.currentTurn.textContent = 'È il tuo turno';
             }
             this.turnIndicator.classList.add('your-turn');
         } else {

@@ -20,7 +20,7 @@
     --gold: #ffd700;
     --table-green: #166534;
     --border-radius: 8px;
-    --card-width: 120px;
+    --card-width: 180px;
     --card-height: calc(var(--card-width) * 1.43);
     --webcam-width: 160px;
     --webcam-height: 120px;
@@ -1195,7 +1195,7 @@ input[type="text"]:focus {
 /* Responsive */
 @media (max-width: 768px) {
     :root {
-        --card-width: 80px;
+        --card-width: 100px;
         --webcam-width: 100px;
         --webcam-height: 75px;
     }

@@ -20,8 +20,10 @@
     --gold: #ffd700;
     --table-green: #166534;
     --border-radius: 8px;
-    --card-width: 90px;
+    --card-width: 120px;
     --card-height: calc(var(--card-width) * 1.43);
+    --webcam-width: 160px;
+    --webcam-height: 120px;
 }
 
 body {
@@ -288,17 +290,19 @@ input[type="text"]:focus {
 .table-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 12px;
+    align-items: stretch;
+    gap: 0;
     flex: 1;
+    min-height: 0;
 }
 
 .table-middle-row {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
-    gap: 16px;
-    width: 100%;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
 }
 
 /* Player positions around the table */
@@ -314,10 +318,19 @@ input[type="text"]:focus {
     display: none; /* Webcams now positioned only on left/right sides */
 }
 
-.players-left,
-.players-right {
+.players-left {
     flex-direction: column;
-    min-width: 170px;
+    min-width: calc(var(--webcam-width) + 20px);
+    padding: 10px;
+    gap: 8px;
+    justify-content: flex-start;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--border-radius);
+}
+
+.players-right {
+    display: none;
 }
 
 .players-bottom {
@@ -327,13 +340,14 @@ input[type="text"]:focus {
 /* Video wrapper styling */
 .video-wrapper {
     position: relative;
-    width: 160px;
-    height: 120px;
+    width: var(--webcam-width);
+    height: var(--webcam-height);
     background: var(--bg-color);
     border-radius: var(--border-radius);
     overflow: hidden;
     border: 2px solid transparent;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .video-wrapper.current-turn {
@@ -405,8 +419,10 @@ input[type="text"]:focus {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    gap: 16px;
+    padding: 10px;
+    gap: 10px;
+    height: 100vh;
+    overflow: hidden;
 }
 
 /* Knock Indicator */
@@ -430,20 +446,20 @@ input[type="text"]:focus {
     }
 }
 
-/* Table Area - enlarged for better visibility */
+/* Table Area - fullscreen for maximum visibility */
 .table-area {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 24px;
-    padding: 40px 80px;
+    padding: 40px;
     background: var(--table-green);
     border-radius: 24px;
-    min-height: 340px;
-    min-width: 480px;
+    flex: 1;
+    min-height: 0;
     box-shadow:
-        inset 0 0 60px rgba(0,0,0,0.3),
+        inset 0 0 80px rgba(0,0,0,0.3),
         0 4px 20px rgba(0,0,0,0.4);
     border: 4px solid #0d4420;
 }
@@ -824,6 +840,58 @@ input[type="text"]:focus {
     border: none;
 }
 
+/* Webcam Size Slider */
+.webcam-size-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--border-radius);
+    margin-top: auto;
+}
+
+.webcam-size-control label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+#webcam-size-slider {
+    width: 100px;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--secondary-color);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+#webcam-size-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#webcam-size-slider::-webkit-slider-thumb:hover {
+    background: var(--primary-hover);
+}
+
+#webcam-size-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+}
+
 /* Game Controls (legacy) */
 .game-controls {
     display: flex;
@@ -1127,7 +1195,9 @@ input[type="text"]:focus {
 /* Responsive */
 @media (max-width: 768px) {
     :root {
-        --card-width: 70px;
+        --card-width: 80px;
+        --webcam-width: 100px;
+        --webcam-height: 75px;
     }
 
     .table-container {
@@ -1139,15 +1209,12 @@ input[type="text"]:focus {
         gap: 8px;
     }
 
-    .players-left,
-    .players-right {
+    .players-left {
         flex-direction: row;
+        flex-wrap: wrap;
         min-width: auto;
-    }
-
-    .video-wrapper {
-        width: 120px;
-        height: 90px;
+        width: 100%;
+        justify-content: center;
     }
 
     .hand-row {
@@ -1196,8 +1263,11 @@ input[type="text"]:focus {
 
     .table-area {
         padding: 20px 24px;
-        min-width: auto;
-        min-height: 200px;
+    }
+
+    .webcam-size-control {
+        width: auto;
+        margin-top: 8px;
     }
 
     .table-area .cards-row {

@@ -82,11 +82,16 @@
 
                 <!-- Middle row: left players, table, right players -->
                 <div class="table-middle-row">
-                    <!-- Left players (includes local player) -->
+                    <!-- Left players (all webcams in turn order) -->
                     <div id="players-left" class="players-position players-left">
                         <div class="video-wrapper local">
                             <video id="local-video" autoplay muted playsinline></video>
                             <span class="player-name">Tu</span>
+                        </div>
+                        <!-- Remote videos will be added here in turn order -->
+                        <div class="webcam-size-control">
+                            <label>Cam</label>
+                            <input type="range" id="webcam-size-slider" min="100" max="250" value="160">
                         </div>
                     </div>
 

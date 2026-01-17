@@ -33,7 +33,10 @@ class GameUI {
         this.playersLeft = document.getElementById('players-left');
         this.playersRight = document.getElementById('players-right');
         this.localVideoWrapper = this.playersLeft.querySelector('.video-wrapper.local');
-        this.remoteVideos = new Map(); // peerId -> { wrapper, position }
+        this.webcamSizeSlider = document.getElementById('webcam-size-slider');
+        this.webcamSizeControl = this.playersLeft.querySelector('.webcam-size-control');
+        this.remoteVideos = new Map(); // peerId -> { wrapper, playerName }
+        this.turnOrder = []; // Array of player IDs in turn order
 
         // Trentuno game elements
         this.potDisplay = document.getElementById('pot-display');
@@ -74,6 +77,17 @@ class GameUI {
         this.onDiscardCard = null; // Called when card is discarded
 
         this.setupDragAndDrop();
+        this.setupWebcamSlider();
+    }
+
+    setupWebcamSlider() {
+        if (this.webcamSizeSlider) {
+            this.webcamSizeSlider.addEventListener('input', (e) => {
+                const size = parseInt(e.target.value);
+                document.documentElement.style.setProperty('--webcam-width', `${size}px`);
+                document.documentElement.style.setProperty('--webcam-height', `${Math.round(size * 0.75)}px`);
+            });
+        }
     }
 
     setupDragAndDrop() {
@@ -253,60 +267,54 @@ class GameUI {
 
         // Coins pile will be added by updateVideoWrapperCoins when game state updates
 
-        // Determine position based on number of remote players
-        const position = this.getNextPosition();
-        this.remoteVideos.set(peerId, { wrapper, position, playerName });
-        this.positionVideo(wrapper, position);
+        // All videos go to the left side
+        this.remoteVideos.set(peerId, { wrapper, playerName });
+        this.positionVideo(wrapper);
     }
 
-    getNextPosition() {
-        // Positions: left, right only (webcams on sides of table)
-        const positions = ['left', 'right'];
-        const counts = { left: 0, right: 0 };
-
-        this.remoteVideos.forEach(({ position }) => {
-            if (counts[position] !== undefined) {
-                counts[position]++;
-            }
-        });
-
-        // Find position with least players
-        let minPos = 'left';
-        let minCount = counts.left;
-        for (const pos of positions) {
-            if (counts[pos] < minCount) {
-                minCount = counts[pos];
-                minPos = pos;
-            }
-        }
-        return minPos;
-    }
-
-    positionVideo(wrapper, position) {
-        const container = {
-            'left': this.playersLeft,
-            'right': this.playersRight
-        }[position];
-
-        if (container) {
-            container.appendChild(wrapper);
+    positionVideo(wrapper) {
+        // Insert before the webcam size control slider
+        if (this.webcamSizeControl) {
+            this.playersLeft.insertBefore(wrapper, this.webcamSizeControl);
+        } else {
+            this.playersLeft.appendChild(wrapper);
         }
     }
 
     repositionAllVideos() {
-        // Clear position containers (only left and right now)
-        this.playersLeft.innerHTML = '';
-        this.playersRight.innerHTML = '';
+        // Remove all video wrappers except local and slider control
+        const wrappers = this.playersLeft.querySelectorAll('.video-wrapper:not(.local)');
+        wrappers.forEach(w => w.remove());
 
-        const entries = Array.from(this.remoteVideos.entries());
+        // Re-add local video wrapper at the beginning
+        if (this.localVideoWrapper && !this.playersLeft.contains(this.localVideoWrapper)) {
+            this.playersLeft.insertBefore(this.localVideoWrapper, this.playersLeft.firstChild);
+        }
 
-        // Distribute players alternating between left and right
-        entries.forEach(([peerId, data], index) => {
-            // Alternate: even index = left, odd index = right
-            const position = index % 2 === 0 ? 'left' : 'right';
-            data.position = position;
-            this.positionVideo(data.wrapper, position);
-        });
+        // Re-add all remote videos in turn order
+        if (this.turnOrder.length > 0 && this.myId) {
+            // Sort remote videos by turn order
+            const sortedEntries = Array.from(this.remoteVideos.entries()).sort((a, b) => {
+                const indexA = this.turnOrder.indexOf(a[0]);
+                const indexB = this.turnOrder.indexOf(b[0]);
+                return indexA - indexB;
+            });
+
+            sortedEntries.forEach(([peerId, data]) => {
+                this.positionVideo(data.wrapper);
+            });
+        } else {
+            // No turn order yet, just add in insertion order
+            this.remoteVideos.forEach(({ wrapper }) => {
+                this.positionVideo(wrapper);
+            });
+        }
+    }
+
+    // Update turn order from game state
+    updateTurnOrder(turnOrder) {
+        this.turnOrder = turnOrder || [];
+        this.repositionAllVideos();
     }
 
     removeRemoteVideo(peerId) {
@@ -410,6 +418,16 @@ class GameUI {
 
         // Render visual coins for central pot
         this.renderPotCoins(state.pot);
+
+        // Update turn order for webcam positioning
+        if (state.playerOrder) {
+            // Filter out my own ID, keep only remote players in turn order
+            const remoteTurnOrder = state.playerOrder.filter(id => id !== myId);
+            if (JSON.stringify(this.turnOrder) !== JSON.stringify(remoteTurnOrder)) {
+                this.turnOrder = remoteTurnOrder;
+                this.repositionAllVideos();
+            }
+        }
 
         // Update video wrappers with game state
         this.updateVideoStates(state, myId);

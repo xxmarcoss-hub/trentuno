@@ -32,7 +32,7 @@ class GameUI {
         this.playersTop = document.getElementById('players-top');
         this.playersLeft = document.getElementById('players-left');
         this.playersRight = document.getElementById('players-right');
-        this.playersBottom = document.getElementById('players-bottom');
+        this.localVideoWrapper = this.playersLeft.querySelector('.video-wrapper.local');
         this.remoteVideos = new Map(); // peerId -> { wrapper, position }
 
         // Trentuno game elements
@@ -320,7 +320,7 @@ class GameUI {
 
     updateVideoStates(state, myId) {
         // Update local player video
-        const localWrapper = this.playersBottom.querySelector('.video-wrapper.local');
+        const localWrapper = this.localVideoWrapper;
         if (localWrapper && state.players[myId]) {
             const isMyTurn = state.currentPlayer === myId && state.roundActive;
             localWrapper.classList.toggle('current-turn', isMyTurn);

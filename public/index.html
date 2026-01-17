@@ -82,8 +82,13 @@
 
                 <!-- Middle row: left players, table, right players -->
                 <div class="table-middle-row">
-                    <!-- Left players -->
-                    <div id="players-left" class="players-position players-left"></div>
+                    <!-- Left players (includes local player) -->
+                    <div id="players-left" class="players-position players-left">
+                        <div class="video-wrapper local">
+                            <video id="local-video" autoplay muted playsinline></video>
+                            <span class="player-name">Tu</span>
+                        </div>
+                    </div>
 
                     <!-- Table area -->
                     <div class="table-area">
@@ -112,14 +117,6 @@
 
                     <!-- Right players -->
                     <div id="players-right" class="players-position players-right"></div>
-                </div>
-
-                <!-- Bottom: local player -->
-                <div id="players-bottom" class="players-position players-bottom">
-                    <div class="video-wrapper local">
-                        <video id="local-video" autoplay muted playsinline></video>
-                        <span class="player-name">Tu</span>
-                    </div>
                 </div>
             </div>
 

@@ -260,10 +260,9 @@ class GameUI {
     }
 
     getNextPosition() {
-        // Positions: top, left, right
-        // Distribute players evenly
-        const positions = ['top', 'left', 'right'];
-        const counts = { top: 0, left: 0, right: 0 };
+        // Positions: left, right only (webcams on sides of table)
+        const positions = ['left', 'right'];
+        const counts = { left: 0, right: 0 };
 
         this.remoteVideos.forEach(({ position }) => {
             if (counts[position] !== undefined) {
@@ -272,8 +271,8 @@ class GameUI {
         });
 
         // Find position with least players
-        let minPos = 'top';
-        let minCount = counts.top;
+        let minPos = 'left';
+        let minCount = counts.left;
         for (const pos of positions) {
             if (counts[pos] < minCount) {
                 minCount = counts[pos];
@@ -285,7 +284,6 @@ class GameUI {
 
     positionVideo(wrapper, position) {
         const container = {
-            'top': this.playersTop,
             'left': this.playersLeft,
             'right': this.playersRight
         }[position];
@@ -296,35 +294,16 @@ class GameUI {
     }
 
     repositionAllVideos() {
-        // Clear all position containers
-        this.playersTop.innerHTML = '';
+        // Clear position containers (only left and right now)
         this.playersLeft.innerHTML = '';
         this.playersRight.innerHTML = '';
 
-        const remoteCount = this.remoteVideos.size;
         const entries = Array.from(this.remoteVideos.entries());
 
-        // Redistribute based on count
-        // 1 player: top
-        // 2 players: left, right
-        // 3 players: top, left, right
-        // 4 players: top (2), left, right
-
+        // Distribute players alternating between left and right
         entries.forEach(([peerId, data], index) => {
-            let position;
-            if (remoteCount === 1) {
-                position = 'top';
-            } else if (remoteCount === 2) {
-                position = index === 0 ? 'left' : 'right';
-            } else if (remoteCount === 3) {
-                position = ['top', 'left', 'right'][index];
-            } else {
-                // 4 players: 2 top, 1 left, 1 right
-                if (index < 2) position = 'top';
-                else if (index === 2) position = 'left';
-                else position = 'right';
-            }
-
+            // Alternate: even index = left, odd index = right
+            const position = index % 2 === 0 ? 'left' : 'right';
             data.position = position;
             this.positionVideo(data.wrapper, position);
         });

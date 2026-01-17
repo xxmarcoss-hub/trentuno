@@ -20,6 +20,8 @@
     --gold: #ffd700;
     --table-green: #166534;
     --border-radius: 8px;
+    --card-width: 90px;
+    --card-height: calc(var(--card-width) * 1.43);
 }
 
 body {
@@ -465,8 +467,8 @@ input[type="text"]:focus {
 }
 
 .discard-pile {
-    min-width: 70px;
-    min-height: 100px;
+    min-width: var(--card-width);
+    min-height: var(--card-height);
     border: 2px dashed rgba(255,255,255,0.3);
     border-radius: 8px;
     display: flex;
@@ -486,12 +488,12 @@ input[type="text"]:focus {
 
 /* Cards */
 .card {
-    width: 70px;
-    height: 100px;
+    width: var(--card-width);
+    height: var(--card-height);
     background: white;
     border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, width 0.2s, height 0.2s;
     position: relative;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     overflow: hidden;
@@ -758,6 +760,18 @@ input[type="text"]:focus {
 /* Player Hand */
 .hand-area {
     text-align: center;
+    padding: 16px 0;
+}
+
+.hand-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+}
+
+.hand-row .btn {
+    flex-shrink: 0;
 }
 
 .player-hand {
@@ -765,10 +779,52 @@ input[type="text"]:focus {
     justify-content: center;
     gap: 8px;
     flex-wrap: wrap;
-    min-height: 110px;
+    min-height: calc(var(--card-height) + 10px);
 }
 
-/* Game Controls */
+/* Card Size Slider */
+.card-size-control {
+    display: flex;
+    justify-content: center;
+    padding: 8px 16px;
+}
+
+#card-size-slider {
+    width: 150px;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--secondary-color);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+#card-size-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#card-size-slider::-webkit-slider-thumb:hover {
+    background: var(--primary-hover);
+}
+
+#card-size-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+}
+
+/* Game Controls (legacy) */
 .game-controls {
     display: flex;
     justify-content: center;
@@ -1070,6 +1126,10 @@ input[type="text"]:focus {
 
 /* Responsive */
 @media (max-width: 768px) {
+    :root {
+        --card-width: 70px;
+    }
+
     .table-container {
         gap: 8px;
     }
@@ -1090,9 +1150,17 @@ input[type="text"]:focus {
         height: 75px;
     }
 
-    .card {
-        width: 55px;
-        height: 80px;
+    .hand-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .hand-row .btn {
+        order: 1;
+    }
+
+    .player-hand {
+        order: 0;
     }
 
     .corner-value {
@@ -1158,10 +1226,6 @@ input[type="text"]:focus {
         height: 58px;
     }
 
-    .discard-pile {
-        min-width: 55px;
-        min-height: 80px;
-    }
 
     .hands-grid {
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

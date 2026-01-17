@@ -50,8 +50,8 @@
 
     <!-- Game Screen -->
     <div id="game-screen" class="screen hidden">
-        <!-- Header -->
-        <header class="game-header">
+        <!-- Header (hidden) -->
+        <header class="game-header hidden">
             <div class="room-info">
                 <span id="game-room-code"></span>
                 <button id="game-copy-link" class="btn btn-small">Copia Link</button>
@@ -126,21 +126,22 @@
             <!-- Hidden container for legacy compatibility -->
             <div id="videos-container" class="hidden"></div>
 
-            <!-- Player's hand -->
+            <!-- Player's hand with action buttons -->
             <div class="hand-area">
-                <div id="player-hand" class="player-hand"></div>
-            </div>
-
-            <!-- Game controls -->
-            <div class="game-controls">
-                <div class="action-controls">
+                <div class="hand-row">
                     <button id="knock-btn" class="btn btn-warning" disabled>
                         Bussa
                     </button>
+                    <div id="player-hand" class="player-hand"></div>
                     <button id="declare-31-btn" class="btn btn-success" disabled>
                         Dichiara 31!
                     </button>
                 </div>
+            </div>
+
+            <!-- Card size slider -->
+            <div class="card-size-control">
+                <input type="range" id="card-size-slider" min="50" max="120" value="90">
             </div>
         </section>
     </div>

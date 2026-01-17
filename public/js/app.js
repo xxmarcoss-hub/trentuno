@@ -186,4 +186,13 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.gameCopyLink.addEventListener('click', () => {
         ui.copyToClipboard(`${window.location.origin}?room=${currentRoomCode}`);
     });
+
+    // Card size slider
+    const cardSizeSlider = document.getElementById('card-size-slider');
+    if (cardSizeSlider) {
+        cardSizeSlider.addEventListener('input', (e) => {
+            const size = e.target.value;
+            document.documentElement.style.setProperty('--card-width', size + 'px');
+        });
+    }
 });

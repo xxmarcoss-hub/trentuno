@@ -544,7 +544,7 @@ input[type="text"]:focus {
 }
 
 .corner-suit {
-    font-size: 0.65rem;
+    font-size: 0.85rem;
 }
 
 /* Card Center */
@@ -568,7 +568,7 @@ input[type="text"]:focus {
 
 .pip {
     position: absolute;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
     line-height: 1;
 }
 
@@ -644,7 +644,7 @@ input[type="text"]:focus {
 }
 
 .face-suit {
-    font-size: 0.6rem;
+    font-size: 0.8rem;
 }
 
 .face-suit.top-suit {
@@ -943,11 +943,11 @@ input[type="text"]:focus {
 }
 
 .player-result .card .corner-suit {
-    font-size: 0.45rem;
+    font-size: 0.55rem;
 }
 
 .player-result .card .pip {
-    font-size: 0.55rem;
+    font-size: 0.7rem;
 }
 
 .player-result .card .ace-symbol {
@@ -959,7 +959,7 @@ input[type="text"]:focus {
 }
 
 .player-result .card .face-suit {
-    font-size: 0.4rem;
+    font-size: 0.5rem;
 }
 
 .result-footer {
@@ -1168,11 +1168,11 @@ input[type="text"]:focus {
     }
 
     .corner-suit {
-        font-size: 0.5rem;
+        font-size: 0.65rem;
     }
 
     .pip {
-        font-size: 0.7rem;
+        font-size: 0.85rem;
     }
 
     .pip-top-left, .pip-top-mid-left, .pip-mid-left, .pip-bot-mid-left, .pip-bot-left { left: 12px; }
@@ -1191,7 +1191,7 @@ input[type="text"]:focus {
     }
 
     .face-suit {
-        font-size: 0.5rem;
+        font-size: 0.65rem;
     }
 
     .table-area {

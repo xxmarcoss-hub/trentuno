@@ -72,11 +72,8 @@
 
         <!-- Game Section -->
         <section class="game-section">
-            <!-- Turn indicator -->
-            <div class="turn-indicator">
-                <span id="current-turn">In attesa...</span>
-                <span id="knock-indicator" class="knock-indicator hidden">BUSSATA!</span>
-            </div>
+            <!-- Knock indicator (only shown when someone knocks) -->
+            <span id="knock-indicator" class="knock-indicator hidden">BUSSATA!</span>
 
             <!-- Table with players around it -->
             <div class="table-container">
@@ -93,7 +90,6 @@
                         <!-- Central pot (gruzzolo) -->
                         <div id="central-pot" class="central-pot">
                             <div class="coins-pile" id="pot-coins"></div>
-                            <span class="pot-label">Gruzzolo: <span id="pot-count">10</span></span>
                         </div>
 
                         <!-- Cards row -->
@@ -101,20 +97,17 @@
                             <!-- Deck -->
                             <div class="deck-area">
                                 <div id="deck" class="card card-back">
-                                    <span id="deck-count">52</span>
+                                    <div class="card-back-pattern">
+                                        <div class="back-design"></div>
+                                    </div>
                                 </div>
-                                <span class="area-label">Mazzo</span>
                             </div>
 
                             <!-- Discard pile -->
                             <div class="discard-area">
                                 <div id="discard-pile" class="discard-pile"></div>
-                                <span class="area-label">Pozzo</span>
                             </div>
                         </div>
-
-                        <!-- Players info (coins) displayed in table -->
-                        <div id="players-info" class="players-info"></div>
                     </div>
 
                     <!-- Right players -->
@@ -135,13 +128,6 @@
 
             <!-- Player's hand -->
             <div class="hand-area">
-                <div class="hand-header">
-                    <h3>Le tue carte</h3>
-                    <div class="my-stats">
-                        <span>Punteggio: <strong id="my-score">0</strong></span>
-                        <span>Monete: <strong id="my-coins">0</strong></span>
-                    </div>
-                </div>
                 <div id="player-hand" class="player-hand"></div>
             </div>
 

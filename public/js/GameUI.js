@@ -38,18 +38,11 @@ class GameUI {
         // Trentuno game elements
         this.potDisplay = document.getElementById('pot-display');
         this.potCoins = document.getElementById('pot-coins');
-        this.potCount = document.getElementById('pot-count');
         this.roundDisplay = document.getElementById('round-display');
-        this.currentTurn = document.getElementById('current-turn');
-        this.turnIndicator = document.querySelector('.turn-indicator');
         this.knockIndicator = document.getElementById('knock-indicator');
-        this.playersInfo = document.getElementById('players-info');
         this.deckElement = document.getElementById('deck');
-        this.deckCount = document.getElementById('deck-count');
         this.discardPile = document.getElementById('discard-pile');
         this.playerHand = document.getElementById('player-hand');
-        this.myScore = document.getElementById('my-score');
-        this.myCoins = document.getElementById('my-coins');
 
         // Game controls
         this.knockBtn = document.getElementById('knock-btn');
@@ -446,25 +439,6 @@ class GameUI {
         const myPlayer = state.players[myId];
         const hasDrawn = myPlayer?.hasDrawn || false;
 
-        // Update turn indicator with phase info (only show instructions for local player)
-        if (!state.roundActive) {
-            this.currentTurn.textContent = 'In attesa della prossima mano...';
-            this.turnIndicator.classList.remove('your-turn');
-            this.turnIndicator.classList.remove('hidden');
-        } else if (isMyTurn) {
-            if (hasDrawn) {
-                this.currentTurn.textContent = 'Trascina una carta nel pozzo per scartarla';
-            } else {
-                this.currentTurn.textContent = 'È il tuo turno';
-            }
-            this.turnIndicator.classList.add('your-turn');
-            this.turnIndicator.classList.remove('hidden');
-        } else {
-            // Hide turn indicator when it's not my turn - the webcam glow shows whose turn it is
-            this.turnIndicator.classList.add('hidden');
-            this.turnIndicator.classList.remove('your-turn');
-        }
-
         // Update knock indicator
         if (state.knocker) {
             this.knockIndicator.classList.remove('hidden');
@@ -473,11 +447,7 @@ class GameUI {
             this.knockIndicator.classList.add('hidden');
         }
 
-        // Update players info bar
-        this.updatePlayersInfo(state, myId);
-
         // Update deck - make it draggable only when it's player's turn and hasn't drawn
-        this.deckCount.textContent = state.deckCount;
         if (isMyTurn && !hasDrawn && state.deckCount > 0) {
             this.deckElement.classList.add('can-drag');
         } else {
@@ -489,64 +459,11 @@ class GameUI {
 
         // Update player hand
         if (myPlayer) {
-            this.myScore.textContent = myPlayer.score;
-            this.myCoins.textContent = myPlayer.coins;
             this.renderHand(myPlayer.hand, isMyTurn && hasDrawn);
         }
 
         // Update action controls
         this.updateControls(state, myId, isMyTurn);
-    }
-
-    updatePlayersInfo(state, myId) {
-        this.playersInfo.innerHTML = '';
-
-        state.playerOrder.forEach(playerId => {
-            const player = state.players[playerId];
-            if (!player) return;
-
-            const card = document.createElement('div');
-            card.className = 'player-info-card';
-
-            if (playerId === state.currentPlayer && state.roundActive) {
-                card.classList.add('current-turn');
-            }
-            if (playerId === state.knocker) {
-                card.classList.add('knocked');
-            }
-            if (playerId === myId) {
-                card.classList.add('is-me');
-            }
-
-            // Create name element
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'player-info-name';
-            nameDiv.textContent = player.name + (playerId === myId ? ' (Tu)' : '');
-            card.appendChild(nameDiv);
-
-            // Create coins pile container
-            const coinsPileDiv = document.createElement('div');
-            coinsPileDiv.className = 'player-coins-pile';
-
-            if (player.coins > 0) {
-                const coins = this.createCoinsPile(player.coins, 5);
-                coinsPileDiv.appendChild(coins);
-            } else {
-                // Show "0 monete" text if no coins
-                const coinsText = document.createElement('span');
-                coinsText.className = 'player-info-coins';
-                coinsText.textContent = '0 monete';
-                coinsText.style.fontSize = '0.8rem';
-                coinsText.style.color = 'var(--text-muted)';
-                card.appendChild(coinsText);
-            }
-
-            if (player.coins > 0) {
-                card.appendChild(coinsPileDiv);
-            }
-
-            this.playersInfo.appendChild(card);
-        });
     }
 
     renderDiscardPile(topCard, canDrag) {
